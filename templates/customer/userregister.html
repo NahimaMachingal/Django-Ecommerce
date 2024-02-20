@@ -1,0 +1,93 @@
+
+ {% extends "base.html" %}
+	 {% load static %}
+	 {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+        }
+
+        .custom-form {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-right: 5px; /* Adjust the margin as needed */
+}
+
+.container {
+    margin-left: 600px; /* Add margin to the right of the container */
+}
+    </style>
+    <title>Registration Form</title>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body custom-form">
+                        <h2 class="card-title text-center">Registration</h2>
+                        <form method="post" action="">
+                            {% csrf_token %}
+                            <!-- First Name -->
+                            <div class="form-group">
+                                <label for="first_name">First Name:</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name"placeholder="first name" required>
+                            </div>
+                            
+                            <!-- Last Name -->
+                            <div class="form-group">
+                                <label for="last_name">Last Name:</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" placeholder="second name"required>
+                            </div>
+
+                            <!-- Email -->
+                            <div class="form-group">
+                                <label for="email">Email:</label>
+                                <input type="email" class="form-control" id="email" name="email" placeholder="Email" required>
+                            </div>
+                            {% if error_message %}
+                            <p style="color: red;">{{ error_message }}</p>
+                            {% endif %}
+
+                            <!-- Password -->
+                            <div class="form-group">
+                                <label for="password">Password:</label>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Password" required>
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div class="form-group">
+                                <label for="confirm_password">Confirm Password:</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Confirm password">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">Register</button>
+                            <br>
+                            <p>Already have an account? <a href="{% url 'userlogin_view' %}" class="link-info">Login</a></p>
+                            <p><a href="{% url 'login_view' %}" class="link-info">Forget Password</a></p>
+                            <br>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
+{% endblock %}

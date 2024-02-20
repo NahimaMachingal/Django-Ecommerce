@@ -1,0 +1,36 @@
+{% extends "customer/base.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container">
+  <form method="POST" action="{% url 'add_product' %}" class="form" enctype="multipart/form-data"> {% csrf_token %}
+    <div class="form-group">
+      <input type="text" name="name" class="form-control" placeholder="Product Name" required>
+    </div>
+    <div class="form-group">
+      <textarea name="description" class="form-control" placeholder="Product Description" rows="3" required></textarea>
+    </div>
+    <div class="form-row">
+      <div class="col">
+        <input type="text" name="price" class="form-control" placeholder="Price" required>
+      </div>
+      <div class="col">
+        <input type="number" name="stock" class="form-control" placeholder=" Stock" required>
+      </div>
+      <div class="col">
+        <input type="text" name="category" class="form-control" placeholder=" Category" required>
+      </div>
+      <div class="col">
+        <input type="text" name="size" class="form-control" placeholder=" Size" required>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="image">Image:</label>
+      <input type="file" name="image" id="image" class="form-control-file" required>
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Add Product</button>
+  </form>
+</div>
+
+
+{% endblock content%}
