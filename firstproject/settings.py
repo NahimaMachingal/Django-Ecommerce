@@ -42,6 +42,9 @@ INSTALLED_APPS = [
     'accounts',
     'category',
     'store',
+    'adminn',
+    'carts',
+    'orders',
     
 ]
 
@@ -53,6 +56,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'firstproject.urls'
@@ -69,6 +73,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'category.context_processors.menu_links',
+                'carts.context_processors.counter',
             ],
         },
     },
@@ -125,7 +130,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR /'static'
+STATIC_ROOT = BASE_DIR /'staticfiles'
 STATICFILES_DIRS = [
     'firstproject/static',
     
@@ -138,3 +143,23 @@ MEDIA_ROOT = BASE_DIR /'media'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.ERROR: "danger",
+}
+
+#SMTP configuration
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'mhnahima@gmail.com'
+EMAIL_HOST_PASSWORD = 'elhl tijp ghta hqaw'
+EMAIL_USE_TLS = True
+
+
+TWILIO_ACCOUNT_SID = 'ACdeeee9eb55fed23f66c5fe65254e2723'
+TWILIO_AUTH_TOKEN = '4d8c1853fc871e917804233acfc5d144'
+COUNTRY_CODE='+971'
+TWILIO_PHONE_NUMBER = '+15169630985'
+

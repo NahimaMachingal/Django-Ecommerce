@@ -2,15 +2,48 @@
 {% load static %}
 {% block content %}
 
-
+<!-- Breadcrumbs -->
+<nav aria-label="breadcrumb">
+	<ol class="breadcrumb">
+		<li class="breadcrumb-item"><a href="{% url 'user_home' %}">Home</a></li>
+		<li class="breadcrumb-item"><a href="{% url 'store' %}">Products</a></li>
+		<li class="breadcrumb-item active" aria-current="page">{{ single_product.product_name }}</li>
+	</ol>
+</nav>
 <section class="section-content padding-y bg">
-<style>
-        /* Custom styles for product images */
-        .product-image {
-            max-width: 100%; /* Adjust the maximum width of the image */
-            height: auto; /* Maintain aspect ratio */
-        }
-    </style>
+	<style>
+		/* Custom styles for product images */
+		.product-image {
+			max-width: 100%;
+			/* Adjust the maximum width of the image */
+			height: 100px;
+			width: 300px;
+			/* Set the initial width of the image */
+			object-fit: cover;
+			/* Maintain aspect ratio */
+			transition: transform 0.5s;
+			/* Add transition for smooth zoom effect */
+		}
+
+		.small-image {
+			width: 100px;
+			height: auto;
+			cursor: pointer;
+			/* Add pointer cursor for better UX */
+			transition: transform 0.5s;
+			/* Add transition for smooth zoom effect */
+		}
+
+		.product-image:hover {
+			transform: scale(1.5);
+			/* Increase the scale on hover to zoom in */
+		}
+
+		.small-image:hover {
+			transform: scale(1.5);
+			/* Increase the scale on hover to zoom in */
+		}
+	</style>
 	<div class="container">
 
 		<!-- ============================ COMPONENT 1 ================================= -->
@@ -19,17 +52,17 @@
 				<aside class="col-md-6">
 					<article class="gallery-wrap">
 						<div class="img-big-wrap">
-							<a href="#"><img src="{{ single_product.images.url}}"></a>
+							<a href="#"><img src="{{ single_product.images.first.image.url}}"></a>
 						</div> <!-- img-big-wrap.// -->
 						<div class="product-images">
 							<div class="row">
-								{% for image in single_product.product_images.all %}
-									{% if image.image %}
-								<div class="col-md-6">
+								{% for image in single_product.images.all %}
+								{% if not forloop.first %} {# Check if it's not the first image #}
+								<div class="col-md-4">
 									<img src="{{ image.image.url }}" alt="{{ single_product.product_name }}"
-										class="img-fluid mb-3">
+										class="img-fluid mb-3 small-image">
 								</div>
-									{% endif %}
+								{% endif %}
 								{% endfor %}
 							</div>
 						</div>
@@ -37,68 +70,67 @@
 					</article> <!-- gallery-wrap .end// -->
 				</aside>
 				<main class="col-md-6 border-left">
-					<article class="content-body">
 
-						<h2 class="title">{{ single_product.product_name }}</h2>
+					<form action="{% url 'add_cart' single_product.id %}" method="POST">
+						{% csrf_token %}
+						<article class="content-body">
 
-						<div class="mb-3">
-							<var class="price h4">${{ single_product.price }}</var>
-							<p>10% off</p> <!-- Display stock count here -->
+							<h2 class="title">{{ single_product.product_name }}</h2>
 
-						</div>
+							<div class="mb-3">
+								<var class="price h4">${{ single_product.price }}</var>
+								<p>10% off</p> <!-- Display stock count here -->
 
-						<p>{{ single_product.description}}</p>
-						<p><b>Stock: </b>{{ single_product.stock }}</p> <!-- Display stock count here -->
-						<p>Coupon : SAVE10</p> <!-- Display stock count here -->
-						
-
-
-						<hr>
-						<div class="row">
-							<div class="item-option-select">
-								<h6>Choose Color</h6>
-								<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-									<label class="btn btn-light">
-										<input type="radio" name="radio_color"> Silver
-									</label>
-									<label class="btn btn-light">
-										<input type="radio" name="radio_color"> Gray
-									</label>
-									<label class="btn btn-light active">
-										<input type="radio" name="radio_color checked"> Gold
-									</label>
-									<label class="btn btn-light">
-										<input type="radio" name="radio_color"> Black
-									</label>
-								</div>
 							</div>
-						</div> <!-- row.// -->
-						<div class="row">
-							<div class="item-option-select">
-								<h6>Select Size</h6>
-								<div class="btn-group btn-group-sm btn-group-toggle" data-toggle="buttons">
-									<label class="btn btn-light">
-										<input type="radio" name="radio_color"> S
-									</label>
-									<label class="btn btn-light active">
-										<input type="radio" name="radio_color" checked> M
-									</label>
-									<label class="btn btn-light">
-										<input type="radio" name="radio_color"> L
-									</label>
-									<label class="btn btn-light">
-										<input type="radio" name="radio_color"> XL
-									</label>
-								</div>
+
+							<p>{{ single_product.description}}</p>
+							<p><b>Stock: </b>{{ single_product.stock }}</p> <!-- Display stock count here -->
+							<p>Coupon : SAVE10</p> <!-- Display stock count here -->
+							<!-- Star rating -->
+							<div class="mb-3">
+								<span class="fa fa-star checked"></span>
+								<span class="fa fa-star checked"></span>
+								<span class="fa fa-star checked"></span>
+								<span class="fa fa-star checked"></span>
+								<span class="fa fa-star"></span>
 							</div>
-						</div> <!-- row.// -->
-						<hr>
-						{% if single_product.stock <= 0 %} <h5>Out of stock</h5>
-							{% else %}
-							<a href="./product-detail.html" class="btn  btn-primary"> <span class="text">Add to
-									cart</span> <i class="fas fa-shopping-cart"></i> </a>
-							{% endif %}
-					</article> <!-- product-info-aside .// -->
+							<!-- End of star rating -->
+
+
+							<hr>
+							<div class="row">
+								<div class="item-option-select">
+									<h6>Choose Color</h6>
+									<select name="color" class="form-control" required>
+										<option value="" disabled selected>Select</option>
+										{% for i in single_product.variation_set.colors %}
+										<option value="{{ i.variation_value | lower }}">{{ i.variation_value | capfirst }}</option>
+										{% endfor %}
+									</select>
+								</div>
+							</div> <!-- row.// -->
+							<div class="row">
+								<div class="item-option-select">
+									<h6>Select Size</h6>
+									<select name="size" class="form-control">
+										<option value="" disabled selected>Select</option>
+										{% for i in single_product.variation_set.sizes %}
+										<option value="{{ i.variation_value | lower }}">{{ i.variation_value | capfirst }}</option>
+										{% endfor %}
+									</select>
+
+
+								</div>
+							</div> <!-- row.// -->
+							<hr>
+							{% if single_product.stock <= 0 %} 
+							<h5 class="text-danger">Out of stock</h5>
+								{% else %}
+								<button type="submit" class="btn  btn-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i> </button>
+								{% endif %}
+
+						</article> <!-- product-info-aside .// -->
+					</form>
 				</main> <!-- col.// -->
 			</div> <!-- row.// -->
 		</div> <!-- card.// -->
@@ -116,9 +148,9 @@
 
 				<article class="box mb-3">
 					<div class="icontext w-100">
-						<img src="{% static './images/items/pph.jpg' %}" class="img-xs icon rounded-circle">
+						<img src="{% static './images/items/llm.jpg' %}" class="img-xs icon rounded-circle">
 						<div class="text">
-							<span class="date text-muted float-md-right">24.04.2020 </span>
+							<span class="date text-muted float-md-right">24.04.2024 </span>
 							<h6 class="mb-1">Mike John </h6>
 
 						</div>

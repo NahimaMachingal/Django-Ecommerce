@@ -1,0 +1,34 @@
+{% extends 'adminn/adminbase.html' %}
+{% block content %}
+
+<h2 class="text-center alert alert-info">Category List</h2>
+<div class="container">
+    <a href="{% url 'adminn:addcategory' %}" class="btn btn-primary mb-3">Add Category</a>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Image</th>
+                <th>Actions</th> <!-- New column for actions -->
+               
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+                {% if category.is_active %}
+            <tr>
+                <td>{{ category.category_name }}</td>
+                <td>{{ category.cat_image }}</td> <!-- Display image if available -->
+                
+                <td>
+                    <a href="{% url 'adminn:editcategory' category.id %}" class="btn btn-sm btn-primary">Edit</a>
+                    <a href="{% url 'adminn:deletecategory' category.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this category?');">Unlist</a>
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock content %}

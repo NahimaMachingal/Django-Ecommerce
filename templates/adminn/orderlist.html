@@ -1,0 +1,45 @@
+{% extends 'adminn/adminbase.html' %}
+{% block content %}
+
+<h2 class="text-center alert alert-info">Order List</h2>
+
+        <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Order No</th>
+                <th>Full Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>City</th>
+                <th>Order Total</th>
+                <th>Tax</th>
+                <th>is_ordered</th>
+                <th>Created At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            {% if order.is_ordered %}
+            <tr>
+                <td>{{ order.order_number }}</td>
+                <td>{{ order.full_name }}</td>
+                <td>{{ order.phone }}</td>
+                <td>{{ order.email }}</td>
+                <td>{{ order.city }}</td>
+                <td>{{ order.order_total}}</td>
+                <td>{{ order.tax }}</td>
+                <td>{{ order.is_ordered }}</td>
+                <td>{{ order.created_at }}</td>
+                <td>
+                   
+                    <a href="{% url 'adminn:deleteorder' order.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this order?');">Delete</a>
+                </td>
+                
+            </tr>
+            {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock content %}

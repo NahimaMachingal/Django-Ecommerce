@@ -59,6 +59,36 @@ class Account(AbstractBaseUser):
     
     def has_perm(self, perm, obj=None):
         return self.is_admin
-    
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
     def has_module_perms(self, add_label):
         return True
+    
+class UserProfile(models.Model):
+    user = models.OneToOneField(Account, on_delete=models.CASCADE)
+    address_line_1 = models.CharField(blank=True, max_length=100)
+    address_line_2 = models.CharField(blank=True, max_length=100)
+    profile_picture = models.ImageField(blank=True, upload_to='userprofile')
+    city = models.CharField(blank=True, max_length=20)
+    state = models.CharField(blank=True, max_length=20)
+    country = models.CharField(blank=True, max_length=20)
+
+    def __str__(self):
+         return self.user.first_name
+    def full_address(self):
+         return f'{self.address_line_1} {self.address_line_2}'
+    
+'''class Address(models.Model):
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
+    first_name = models.CharField(max_length=50)
+    last_name = models.CharField(max_length=50)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100)
+    postal_code = models.CharField(max_length=20)
+    country = models.CharField(max_length=100)
+    phone_number = models.CharField(max_length=50)
+    is_default = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.first_name} {self.last_name}, {self.city}, {self.country}"'''
+    
