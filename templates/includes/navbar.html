@@ -101,6 +101,16 @@
 							</div>
 							<span class="badge badge-pill badge-danger notify">{{cart_count}}</span>
 						</a>
+						
+						<a href="{% url 'wishlist' %}">
+    <div class="icon icon-sm rounded-circle border ml-2">
+        <i class="fa fa-heart"></i>
+		{% if wishlist_count > 0 %}
+            <span class="badge badge-pill badge-danger" style="position: absolute; top: -5px; right: -5px;">{{ wishlist_count }}</span>
+        {% endif %}
+    </div>
+</a>
+
 					</div> <!-- widgets-wrap.// -->
 				</div> <!-- col.// -->
 			</div> <!-- row.// -->

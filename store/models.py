@@ -1,6 +1,7 @@
 from django.db import models
 from category.models import Category
 from django.urls import reverse
+from accounts.models import Account
 
 
 # Create your models here.
@@ -54,3 +55,15 @@ class Variation(models.Model):
 
     def __str__(self):
         return self.variation_value
+    
+class Wishlist(models.Model):
+    user = models.ForeignKey(Account, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    added_date = models.DateTimeField(auto_now_add=True)
+
+    def get_url(self):
+        return reverse('product_detaill', args=[self.product.slug])
+
+
+    def __str__(self):
+        return f'{self.user.username} - {self.product.product_name}'

@@ -3,7 +3,7 @@
 {% block content %}
 
 <!-- ========================= SECTION CONTENT ========================= -->
-<section class="section-conten padding-y bg">
+<section class="section-content padding-y bg">
 {% include 'includes/alerts.html' %}
 <div class="container">
 	<div class="row">
@@ -11,70 +11,54 @@
 	<main class="col-md-9">
 		<article class="card">
 		<header class="card-header">
-			<strong class="d-inline-block mr-3">Edit your Profile</strong>
-			
-		</header>
-		<div class="card-body">
-            <div class="text-right">
-            <img src="{{userprofile.profile_picture.url}}" alt="Profile Picture" width="80" style="border-radius:50px;">
-            </div>
-			<div class="row"> 
-			<div class="col-md-12">
-            <form action="{% url 'edit_profile' %}" method="POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="form-row">
-            <div class="form-group col-md-6">
-            <label>First Name</label>
-            {{user_form.first_name}}
-            </div>
-            <div class="form-group col-md-6">
-            <label>Last Name</label>
-            {{user_form.last_name}}
-            </div>
-            </div>
-            <div class="form-row">
-            <div class="form-group col-md-6">
-            <label>Phone Number</label>
-            {{user_form.phone_number}}
-            </div>
-            <div class="form-group col-md-6">
-                <label>Profile Picture</label>
-                {{profile_form.profile_picture}}
-                </div>
-            </div>
+            <div style="margin-left: 20px;">
+            <h3>User Profile</h3>
+            <br>
+			<p><strong>Full Name:</strong> {{ request.user.full_name }}</p>
+            <p><strong>Email:</strong> {{ request.user.email }}</p>
+            <br>
             
-            <div class="form-group">
-            <label>Address Line 1</label>
-            {{profile_form.address_line_1}}
-            </div>
-
-            <div class="form-group">
-            <label>Address Line 2</label>
-            {{profile_form.address_line_2}}
-            </div>
-            <div class="form-row">
-                <div class="form-group col-md-4">
-                <label>City</label>
-                {{profile_form.city}}
-                </div>
-                <div class="form-group col-md-4">
-                <label>State</label>
-                {{profile_form.state}}
-                </div>
-                <div class="form-group col-md-4">
-                    <label>Country</label>
-                    {{profile_form.country}}
-                    </div>
-                </div>
-
-                <input type="submit" value="Save" class="btn btn-primary">
-
-            </form>
-            </div>
-            </div>
-			</div> <!-- row.// -->
-		</div> <!-- card-body .// -->
-		
+		</header>
+        <hr>
+    <div style="margin-left: 20px;">
+        <h4>My Addresses</h4>
+        
+        {% if addresses %}
+        <ul>
+            {% for address in addresses %}
+            <li>
+                <strong>Street Address:</strong> {{ address.street_address }} <br>
+                <strong>City:</strong> {{ address.city }} <br>
+                <strong>State:</strong> {{ address.state }} <br>
+                <strong>Country:</strong> {{ address.country }} <br>
+                <strong>Phone Number:</strong> {{ address.phone_number }} <br>
+                <br>
+                <div class = form-row>
+                <form method="post" action="{% url 'edit_address' address.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary">Edit</button>
+                </form>
+                &nbsp; <!-- Add a non-breaking space for gap -->
+                <form method="post" action="{% url 'delete_address' address.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form></div>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <p>No addresses found.</p>
+        {% endif %}
+        </div>
+        <div class="mt-3 ml-5" style="display: inline-block;">
+		<a href="{% url 'add_address' %}" class="btn btn-primary">Add Address</a>
+        </div>
+        <!-- Checkout button -->
+    <div class="text-center">
+        <a href="{% url 'checkout' %}" class="btn btn-success">Checkout</a>
+    </div>
+        <br>
+        <br>
 		</article> <!-- order-group.// --> 
 	</main>
 </div> <!-- row.// -->

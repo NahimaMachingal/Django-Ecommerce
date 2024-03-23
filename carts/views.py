@@ -1,7 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from store.models import Product, Variation
+from store.models import Product, Variation, Wishlist
 from .models import Cart, CartItem
+from django.contrib import messages
+from orders.models import Order, OrderProduct, Coupon
+from accounts.forms import AddressForm
+from accounts.models import Address
+from django.utils import timezone
+import json
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 #from accounts.forms import AddressForm
 #from accounts.models import Address
@@ -174,9 +181,11 @@ def cart(request, total=0, quantity=0, cart_items=None):
              
         if request.user.is_authenticated:
             cart_items = CartItem.objects.filter(user=request.user, is_active=True)
+            wishlist_items = Wishlist.objects.filter(user=request.user)  # Fetch wishlist items for the user
         else:
             cart = Cart.objects.get(cart_id=_cart_id(request))
             cart_items = CartItem.objects.filter(cart=cart, is_active=True)
+            wishlist_items = None  # If the user is not authenticated, wishlist items will be None
         for cart_item in cart_items:
             total += (cart_item.product.price * cart_item.quantity)
             quantity += cart_item.quantity
@@ -192,6 +201,8 @@ def cart(request, total=0, quantity=0, cart_items=None):
         'cart_items': cart_items,
         'tax' : tax,
         'grand_total' : grand_total,
+        'wishlist_items': wishlist_items,  # Include wishlist items in the context
+    
     }
     return render(request,'store/cart.html', context)
 
@@ -201,6 +212,9 @@ def checkout(request, total=0, quantity=0, cart_items=None):
     try:
         tax = 0  # Initialize tax variable outside of try block
         grand_total = 0  # Initialize tax variable outside of try block
+        addresses = Address.objects.filter(user=request.user)
+        coupon = None  # Initialize coupon variable
+        final_total = 0  # Initialize final_total variable
         if request.user.is_authenticated:
             cart_items = CartItem.objects.filter(user=request.user, is_active=True)
         else:
@@ -212,6 +226,8 @@ def checkout(request, total=0, quantity=0, cart_items=None):
         tax = (2 * total)/100
         grand_total = total + tax
 
+        
+
     except ObjectDoesNotExist:
         pass
 
@@ -221,39 +237,81 @@ def checkout(request, total=0, quantity=0, cart_items=None):
         'cart_items': cart_items,
         'tax' : tax,
         'grand_total' : grand_total,
+        'addresses': addresses,
     }
     return render(request, 'store/checkout.html',context)
 
-
-'''@login_required
-def addaddress(request):
+@login_required(login_url = 'loginn')
+def add_address(request):
     if request.method == 'POST':
-        form = AddressForm(request.POST)
-        if form.is_valid():
-            address = form.save(commit=False)
+        address_form = AddressForm(request.POST)
+        if address_form.is_valid():
+            address = address_form.save(commit=False)
             address.user = request.user
             address.save()
-            return redirect('checkout', address_id=address.id)
+            messages.success(request, 'Address added successfully')
+            return redirect('edit_profile')
     else:
-        form = AddressForm()
-    return render(request, 'store/addaddress.html', {'form': form})
+        address_form = AddressForm()
 
+    context = {
+        'address_form': address_form,
+    }
+    return render(request, 'accounts/add_address.html', context)
 
-@login_required
-def editaddress(request, address_id):
-    address = Address.objects.get(id=address_id, user=request.user)
+@login_required(login_url = 'loginn')
+def edit_address(request, address_id):
+    address = get_object_or_404(Address, id=address_id)
     if request.method == 'POST':
-        form = AddressForm(request.POST, instance=address)
-        if form.is_valid():
-            form.save()
-            return redirect('checkout')
+        address_form = AddressForm(request.POST, instance=address)
+        if address_form.is_valid():
+            address_form.save()
+            messages.success(request, 'Address updated successfully')
+            return redirect('edit_profile')
     else:
-        form = AddressForm(instance=address)
-    return render(request, 'user/user/address_form.html', {'form': form})
+        address_form = AddressForm(instance=address)
+
+    context = {
+        'address_form': address_form
+    }
+    return render(request, 'accounts/edit_address.html', context)
+
+@login_required(login_url = 'loginn')
+def delete_address(request, address_id):
+    address = Address.objects.get(pk=address_id)
+    if request.method == 'POST':
+        address.delete()
+        messages.success(request, 'Address deleted successfully')
+    return redirect('edit_profile')
 
 
-@login_required
-def deleteaddress(request, address_id):
-    address = Address.objects.get(id=address_id, user=request.user)
-    address.delete()
-    return redirect('checkout')'''
+def apply_coupon(request):
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Extract the coupon code from the request body
+        body_unicode = request.body.decode('utf-8')
+        body_data = json.loads(body_unicode)
+        coupon_code = body_data.get('coupon_code')
+        current_datetime = timezone.now()
+
+        try:
+            coupon = Coupon.objects.get(code=coupon_code)
+            if coupon.valid_from <= current_datetime <= coupon.valid_to:
+                # Coupon is valid, you can return success and additional coupon information
+                print('good')
+                return JsonResponse({'success': True, 'discount': coupon.discount}, status=200)
+                
+            else:
+                # Coupon is expired
+                print('expir')
+                return JsonResponse({'success': False, 'error': 'Coupon is expired'}, status=400)
+        except Coupon.DoesNotExist:
+            # Coupon does not exist
+            print('error')
+            return JsonResponse({'success': False, 'error': 'Invalid coupon code'}, status=400)
+    else:
+        # Method not allowed or request is not AJAX
+        print('big error')
+        return JsonResponse({'success': False, 'error': 'Invalid request'}, status=400)
+
+
+

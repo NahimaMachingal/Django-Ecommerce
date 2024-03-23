@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect, get_object_or_404
-from . forms import RegistrationForm, UserProfileForm, UserForm 
-from . models import Account, UserProfile
+from . forms import RegistrationForm, AddressForm
+from . models import Account, UserProfile, Address
 from orders.models import Order
 from django.contrib import messages,auth
 from django.contrib.auth.decorators import login_required
@@ -280,27 +280,74 @@ def my_orders(request):
     }
     return render(request, 'accounts/my_orders.html', context)
 
-@login_required(login_url='loginn')
+@login_required(login_url = 'loginn')
 def edit_profile(request):
-    userprofile = get_object_or_404(UserProfile, user=request.user)
+    user = request.user
+    profile = UserProfile.objects.get_or_create(user=user)[0]
+    addresses = Address.objects.filter(user=user)
+
     if request.method == 'POST':
-        user_form = UserForm(request.POST, instance=request.user)
-        profile_form = UserProfileForm(request.POST, request.FILES, instance=userprofile)
-        if user_form.is_valid() and profile_form.is_valid():
-            user_form.save()
-            profile_form.save()
-            messages.success(request, 'Your profile has been updated.')
+        address_form = AddressForm(request.POST)
+        if address_form.is_valid():
+            address = address_form.save(commit=False)
+            address.user = user
+            address.save()
+            profile.addresses.add(address)
+            messages.success(request, 'Address added successfully')
             return redirect('edit_profile')
     else:
-        user_form = UserForm(instance=request.user)
-        profile_form = UserProfileForm(instance=userprofile)
+        address_form = AddressForm()
+
     context = {
-        'user_form' : user_form,
-        'profile_form' : profile_form,
-        'userprofile' : userprofile,
+        'address_form': address_form,
+        'addresses': addresses
     }
-        
     return render(request, 'accounts/edit_profile.html', context)
+
+@login_required(login_url = 'loginn')
+def add_address(request):
+    if request.method == 'POST':
+        address_form = AddressForm(request.POST)
+        if address_form.is_valid():
+            address = address_form.save(commit=False)
+            address.user = request.user
+            address.save()
+            messages.success(request, 'Address added successfully')
+            return redirect('edit_profile')
+    else:
+        address_form = AddressForm()
+
+    context = {
+        'address_form': address_form,
+    }
+    return render(request, 'accounts/add_address.html', context)
+
+@login_required(login_url = 'loginn')
+def edit_address(request, address_id):
+    address = get_object_or_404(Address, id=address_id)
+    if request.method == 'POST':
+        address_form = AddressForm(request.POST, instance=address)
+        if address_form.is_valid():
+            address_form.save()
+            messages.success(request, 'Address updated successfully')
+            return redirect('edit_profile')
+    else:
+        address_form = AddressForm(instance=address)
+
+    context = {
+        'address_form': address_form
+    }
+    return render(request, 'accounts/edit_address.html', context)
+
+@login_required(login_url = 'loginn')
+def delete_address(request, address_id):
+    address = Address.objects.get(pk=address_id)
+    if request.method == 'POST':
+        address.delete()
+        messages.success(request, 'Address deleted successfully')
+    return redirect('edit_profile')
+
+
 @login_required(login_url='loginn')   
 def change_password(request):
     if request.method == 'POST':
@@ -334,13 +381,53 @@ def order_detail(request, order_id):
     for i in order_detail:
         subtotal += i.product_price * i.quantity
 
+    # Fetching payment method from the related Payment object
+    payment_method = order.payment.payment_method if order.payment else None
+
     context = {
         'order_detail' : order_detail,
         'order' : order,
         'subtotal' : subtotal,
+        'payment': order.payment,
+        'payment_method': payment_method,
         
     }
     
 
     return render(request, 'accounts/order_detail.html', context)
+
+def return_order(request):
+    if request.method == 'POST':
+        order_number = request.POST.get('order_number')
+        try:
+            order = Order.objects.get(order_number=order_number)
+            # Check if the order status is 'Completed'
+            if order.status == 'Completed':
+                # Set the order status to 'Returned'
+                order.status = 'Returned'
+                order.save()
+                return redirect('my_orders')
+        except Order.DoesNotExist:
+            # Handle the case where the order does not exist
+            pass
+    # Redirect to a specific URL after processing the return request
+    return redirect('my_orders')  # Replace 'order_return_confirmation' with the desired URL name
+
+def cancel_orderr(request, order_number):
+    # Retrieve the order based on the order number
+    order = get_object_or_404(Order, order_number=order_number)
+    
+    # Update order status to 'Cancelled' and set is_ordered to False
+    order.status = 'Cancelled'
+    order.is_ordered = False
+    order.save()
+
+    # Retrieve order items and update product stock
+    order_items = OrderProduct.objects.filter(order=order)
+    for order_item in order_items:
+        product = order_item.product
+        product.stock += order_item.quantity  # Increase product stock
+        product.save()
+    messages.success(request, "Order has been cancelled successfully.")
+    return redirect('my_orders')  # Redirect to a success page after cancellation
     

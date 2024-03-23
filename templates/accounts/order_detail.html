@@ -29,8 +29,23 @@
                                 <div class="well">
                                     <ul class="list-unstyled mb0">
                                         <li><strong>Order</strong> #{{ order.order_number }}</li>
+                                        <li><strong>Status</strong> {{ order.status }}</li>
                                         <li><strong>Order Date: </strong>{{ order.created_at }}</li>
+                                        {% if payment.payment_method == 'PayPal' %}
+                                        <li><strong>Payment: </strong>Paypal</li>
+                                        {% else %}
                                         <li><strong>Payment: </strong>COD</li>
+                                        {% endif %}
+
+                                        {% if order.status == 'Completed' %}
+                                        <li>
+                                            <form action="{% url 'return_order' %}" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="order_number" value="{{ order.order_number }}">
+                                                <button type="submit" class="btn btn-danger">Return</button>
+                                            </form>
+                                        </li>
+                                        {% endif %}
                                     </ul>
                                 </div>
                             </div>
@@ -51,8 +66,7 @@
                                                     <p class="text-muted small">
                                                         {% if item.variations.all %}
                                                         {% for i in item.variations.all %}
-                                                        {{ i.variation_category | capfirst }} : {{ i.variation_value |
-                                                        capfirst }}<br>
+                                                        {{ i.variation_category | capfirst }} : {{ i.variation_value | capfirst }}<br>
                                                         {% endfor %}
                                                         {% endif %}
                                                     </p>

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, ProductImage, Variation
+from .models import Product, ProductImage, Variation, Wishlist
 
 
 # Register your models here.
@@ -16,6 +16,12 @@ class VariationAdmin(admin.ModelAdmin):
     list_display = ('product', 'variation_category', 'variation_value', 'is_active')
     list_editable = ('is_active',)
     list_filter = ('product', 'variation_category', 'variation_value',)
+class WishlistAdmin(admin.ModelAdmin):
+    list_display = ('user', 'product', 'added_date')  # Display these fields in the admin list
+    list_filter = ('user', 'added_date')  # Add filters for these fields
+    search_fields = ['user__username', 'product__product_name']  # Add search functionality for related fields
+
+admin.site.register(Wishlist, WishlistAdmin)
 
 #admin.site.register(Product,ProductAdmin)
 admin.site.register(Product)

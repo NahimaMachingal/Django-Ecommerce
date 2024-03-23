@@ -4,6 +4,7 @@ from django import forms
 from store.models import Product, ProductImage
 from django.forms import modelformset_factory
 from category.models import Category
+from orders.models import Coupon
 
 class ProductForm(forms.ModelForm):
     class Meta:
@@ -34,3 +35,17 @@ class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
         fields = ['category_name', 'slug', 'description', 'cat_image']
+
+
+class CouponForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control'})
+    class Meta:
+        model = Coupon
+        fields = ['code', 'discount', 'valid_from', 'valid_to']
+        widgets = {
+            'valid_from': forms.DateTimeInput(attrs={'type': 'datetime-local' , 'class': 'form-control'}),
+            'valid_to': forms.DateTimeInput(attrs={'type': 'datetime-local' , 'class': 'form-control'}),
+        }

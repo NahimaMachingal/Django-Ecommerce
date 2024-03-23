@@ -19,5 +19,12 @@ urlpatterns = [
     path('edit_profile/', views.edit_profile, name='edit_profile'),
     path('change_password/', views.change_password, name='change_password'),
     path('order_detail/<int:order_id>/', views.order_detail, name='order_detail'),
+    path('edit_address/<int:address_id>/', views.edit_address, name='edit_address'),
+    path('delete_address/<int:address_id>/', views.delete_address, name='delete_address'),
+    path('add_address/', views.add_address, name='add_address'),
+    path('return_order/', views.return_order, name='return_order'),
+    path('cancel_orderr/<str:order_number>/', views.cancel_orderr, name='cancel_orderr'),
+
+
 
 ]   

@@ -1,0 +1,32 @@
+{% extends 'adminn/adminbase.html' %}
+{% block content %}
+<h2 class="text-center alert alert-info">Coupon List</h2>
+<div class="container">
+
+<div class="text-right mb-3">
+    <a href="{% url 'adminn:add_coupon' %}" class="btn btn-primary mb-3">Add Coupon</a>
+    </div>
+    </div>
+    <div class="container">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Discount</th>
+                <th>Valid From</th>
+                <th>Valid To</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for coupon in coupons %}
+            <tr>
+                <td>{{ coupon.code }}</td>
+                <td>{{ coupon.discount }}</td>
+                <td>{{ coupon.valid_from }}</td>
+                <td>{{ coupon.valid_to }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

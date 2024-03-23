@@ -1,13 +1,14 @@
-from django.shortcuts import render,get_object_or_404
-from . models import Product
+from django.shortcuts import render,get_object_or_404, redirect
+from . models import Product, Wishlist
 from category.models import Category
 from django.http import Http404
 from carts.views import _cart_id
-from carts.models import CartItem
+from carts.models import CartItem, Variation
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.http import HttpResponse
 from django.db.models import Q
 from django.db.models import Count, Avg
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
@@ -73,6 +74,76 @@ def search(request):
         'product_count' : product_count,
     }
     return render(request, 'store/store.html', context)
+
+def add_wishlist(request, product_slug):
+    try:
+        product = Product.objects.get(slug=product_slug)
+        variations = []  # Initialize an empty list to store variations
+
+        # Get the selected variations from the request
+        if request.method == "POST":
+            for item in request.POST:
+                if 'variation_id' in item:
+                    variation_id = request.POST.get(item)
+                    print(f"Variation ID: {variation_id}")
+                    try:
+                        variation = Variation.objects.get(id=variation_id)
+                        variations.append(variation)
+                    except Variation.DoesNotExist:
+                        pass
+
+        # Create the Wishlist item with the selected variations
+        wishlist_item = Wishlist.objects.create(user=request.user, product=product)
+        if variations:
+            wishlist_item.variations.set(variations)
+
+
+    except Product.DoesNotExist:
+        return redirect('store')  # Redirect to home page if the product doesn't exist
+
+    return redirect('wishlist')  # Redirect to the wishlist page after adding the product
+
+    
+
+def remove_from_wishlist(request, wishlist_item_id):
+    wishlist_item = get_object_or_404(Wishlist, id=wishlist_item_id)
+    wishlist_item.delete()
+    return redirect('wishlist')
+
+@login_required(login_url='loginn')
+def wishlist(request):
+    if request.method == 'POST':
+        wishlist_item_id = request.POST.get('wishlist_item_id')
+        if wishlist_item_id:
+            wishlist_item = get_object_or_404(Wishlist, id=wishlist_item_id)
+            wishlist_item.delete()
+            return redirect('wishlist')
+
+    wishlist_items = Wishlist.objects.filter(user=request.user)
+    
+    context = {
+        'wishlist_items': wishlist_items,
+        }
+    return render(request, 'store/wishlist.html', context)
+
+def product_detaill(request, product_slug):
+    try:
+        single_product = Product.objects.get(slug=product_slug)
+        in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(request), product=single_product).exists()
+        
+    except Exception as e:
+        raise e
+    
+    
+    context = {
+        'single_product': single_product,
+        'in_cart' : in_cart,
+        
+    }
+    return render(request, 'store/product_detail.html', context)
+
+
+
 
 
 
