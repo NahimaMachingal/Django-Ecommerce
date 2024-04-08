@@ -8,6 +8,7 @@ from django.http import HttpResponse
 from accounts.models import Address
 from .models import Order, OrderProduct, Payment, Coupon
 from django.urls import reverse
+from accounts.models import Wallet
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
 from carts.models import Cart
@@ -77,10 +78,16 @@ def place_order(request, total=0, quantity=0):
         current_user = request.user
         # Get the current date and time
         current_datetime = datetime.now()
+        # Get the selected address and coupon from the request
         selected_address_id = request.POST.get('selected_address')
         coupon = request.POST.get('coupon')
-
-        
+        try:
+            # Retrieve the user's wallet and get the wallet balance
+            wallet = Wallet.objects.get(account=current_user)
+            wallet_balance = wallet.wallet_balance
+        except Wallet.DoesNotExist:
+            # If the user doesn't have a wallet, set wallet_balance to 0
+            wallet_balance = 0      
 
 
         # if the cart count is less than or equal to 0, then redirect back to shop
@@ -165,6 +172,7 @@ def place_order(request, total=0, quantity=0):
                 'grand_total' : grand_total,
                 'discount' : discount,
                 'final_total': final_total,
+                'wallet_balance' : wallet_balance,
 
 
             }
@@ -256,6 +264,59 @@ def cash_on_delivery(request, order_number):
     return render(request, 'orders/confirmpayment.html', context)
 
 
+def add_to_wallet(request, order_number):
+    try:
+        # Retrieve the user's wallet
+        wallet = get_object_or_404(Wallet, account=request.user)
+        
+        # Retrieve the order based on the order number
+        order = get_object_or_404(Order, order_number=order_number)
+        
+        # Retrieve the final_total from the order
+        final_total = order.final_total
+        
+        # Check if the user has enough balance in the wallet
+        if wallet.wallet_balance < final_total:
+            messages.error(request, "Insufficient balance in your wallet.")
+            return redirect('cart')  # Redirect to the cart page or any relevant page
+        
+        # Reduce the final_total amount from the wallet_balance
+        wallet.wallet_balance -= final_total
+        wallet.save()
+
+        # Update the order status to 'Completed' and is_ordered to True
+        order.status = 'Completed'
+        order.is_ordered = True
+        order.save()
+
+        # Retrieve cart items and add them to the order
+        cart_items = CartItem.objects.filter(user=request.user)
+        for item in cart_items:
+            orderproduct = OrderProduct()
+            orderproduct.order_id = order.id
+            orderproduct.user_id = request.user.id
+            orderproduct.product_id = item.product_id
+            orderproduct.quantity = item.quantity
+            orderproduct.product_price = item.product.price
+            orderproduct.ordered = True
+            orderproduct.save()
+
+        # Delete all the current user's cart items
+        CartItem.objects.filter(user=request.user).delete()
+
+        # Render the confirm_payment.html template with the order details
+        context = {
+            'order_number': order_number,
+            'order': order
+        }
+
+        messages.success(request, "Order placed successfully. Amount deducted from your wallet.")
+        return render(request, 'orders/confirmpayment.html', context)
+    except Exception as e:
+        messages.error(request, "An error occurred while processing your order.")
+        return redirect('cart')  # Redirect to the cart page or any relevant page
+
+
 def cancel_order(request, order_number):
     # Retrieve the order based on the order number
     order = get_object_or_404(Order, order_number=order_number)
@@ -284,6 +345,9 @@ def cancell_order(request, order_number):
         messages.warning(request, "This order has already been cancelled.")
         return redirect('store')  # Redirect to a relevant page
     
+    # Retrieve the final_total from the Order model
+    final_total = order.final_total
+    
     # Update order status to 'Cancelled' and set is_ordered to False
     order.status = 'Cancelled'
     order.is_ordered = False
@@ -295,6 +359,18 @@ def cancell_order(request, order_number):
         product = order_item.product
         product.stock += order_item.quantity  # Increase product stock
         product.save()
+
+    # Retrieve the user's wallet if it exists, or create a new wallet if it doesn't exist
+    wallet, created = Wallet.objects.get_or_create(account=request.user)
+    
+    # If the wallet was just created, set the wallet balance to the final_total
+    if created:
+        wallet.wallet_balance = final_total
+    else:
+        # If the wallet already exists, add the final_total to the existing wallet balance
+        wallet.wallet_balance += final_total
+
+    wallet.save()
     
     messages.success(request, "Order has been cancelled successfully.")
     return redirect('store')  # Redirect to a success page after cancellation

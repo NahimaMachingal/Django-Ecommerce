@@ -6,7 +6,7 @@ class Category(models.Model):
     category_name = models.CharField(max_length=255,unique=True, blank=True)
     slug = models.SlugField(max_length=100, unique=True, blank=True)
     description = models.TextField(max_length=255, blank=True)
-    cat_image = models.ImageField(upload_to='photos/categories', blank=True)
+    category_image = models.ImageField(upload_to='photos/categories', blank=True)
     is_active = models.BooleanField(default=True)# Soft delete flag
 
     class Meta:

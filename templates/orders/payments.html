@@ -108,6 +108,13 @@
             </p>
             <a href="{% url 'cash_on_delivery' order.order_number %}" class="btn btn-primary btn-block">Cash On Delivery</a>
            <br>
+           {% if wallet_balance %}
+           <a href="{% url 'add_to_wallet' order.order_number %}" class="btn btn-primary btn-block"> Wallet Pay ({{ wallet_balance }})</a>
+           <br>
+           {% else %}
+           <a href="{% url 'add_to_wallet' order.order_number %}" class="btn btn-primary btn-block"> Wallet Pay (0.00)</a>
+           <br>
+           {% endif %}
             <div id="paypal-button-container">
             <!--Pay pal button will load-->
             </div>

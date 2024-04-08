@@ -1,6 +1,7 @@
 // some scripts
 
 // jquery ready start
+console.log('hello')
 $(document).ready(function() {
 	// jQuery code
 

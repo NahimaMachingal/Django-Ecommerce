@@ -34,7 +34,7 @@ class ProductImageForm(forms.ModelForm):
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
-        fields = ['category_name', 'slug', 'description', 'cat_image']
+        fields = ['category_name', 'slug', 'description', 'category_image']
 
 
 class CouponForm(forms.ModelForm):
