@@ -8,6 +8,7 @@ urlpatterns = [
     #path('products/', views.product_list, name='product_list'),
     #path('addproducts',views.add_product, name='add_product'),
     path('adminhome/',views.adminhome, name='adminhome'),
+    path('signout/',views.signout, name='signout'),
     path('users/', views.users, name='users'),
     path('addproduct/', views.addproduct, name='addproduct'),
     path('productlist/', views.productlist, name='productlist'),
@@ -31,9 +32,9 @@ urlpatterns = [
     path('sales/monthly/', views.sales_report, {'period': 'monthly'}, name='monthly_sales_report'),
     path('sales/yearly/', views.sales_report, {'period': 'yearly'}, name='yearly_sales_report'),
     path('sales/custom/', views.sales_report, {'period': 'custom'}, name='custom_sales_report'),
-    path('sales-report/pdf/<str:period>/<str:start_date>/<str:end_date>/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
-    path('sales-report/pdf/<str:period>/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
-    path('sales-report/excel/<str:period>/', views.sales_report_excel, name='sales_report_excel'),
-    path('sales-report/pdf/', views.download_sales_report_pdf, name='download_sales_report_pdf'),
-
+    path('coupon/<int:coupon_id>/delete/', views.delete_coupon, name='delete_coupon'),
+    path('custom_admin_homepage/', views.custom_admin_homepage, name='custom_admin_homepage'),
+    path('sales_report/pdf/', views.download_sales_reportpdf, name='download_sales_reportpdf'),
+    path('sales_report/excel/', views.download_sales_reportexcel, name='download_sales_reportexcel'),
+    
 ]

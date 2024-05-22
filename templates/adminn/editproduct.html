@@ -6,6 +6,15 @@
   <form method="post" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.as_p }}
+     {{ image_form.as_p }}
+     <div class="form-group">
+      <label>Existing Images:</label>
+      <div>
+        {% for image in existing_images %}
+          <img src="{{ image.image.url }}" alt="{{ product.product_name }}" class="img-thumbnail" style="max-width: 100px; margin: 5px;">
+        {% endfor %}
+      </div>
+    </div>
     <input type="submit" class="btn btn-primary" value="Save Changes">
   </form>
 </div>

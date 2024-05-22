@@ -140,7 +140,8 @@ def add_cart(request, product_id):
                 cart_item.variations.clear()
                 cart_item.variations.add(*product_variation)
             cart_item.save()
-        return redirect('cart')    
+    
+    return redirect('cart') 
     
 
 def remove_cart(request, product_id, cart_item_id):
@@ -187,7 +188,7 @@ def cart(request, total=0, quantity=0, cart_items=None):
             cart_items = CartItem.objects.filter(cart=cart, is_active=True)
             wishlist_items = None  # If the user is not authenticated, wishlist items will be None
         for cart_item in cart_items:
-            total += (cart_item.product.price * cart_item.quantity)
+            total += cart_item.sub_total()
             quantity += cart_item.quantity
         tax = (2 * total)/100
         grand_total = total + tax
@@ -221,7 +222,7 @@ def checkout(request, total=0, quantity=0, cart_items=None):
             cart = Cart.objects.get(cart_id=_cart_id(request))
             cart_items = CartItem.objects.filter(cart=cart, is_active=True)        
         for cart_item in cart_items:
-            total += (cart_item.product.price * cart_item.quantity)
+            total += cart_item.sub_total()
             quantity += cart_item.quantity
         tax = (2 * total)/100
         grand_total = total + tax
@@ -230,6 +231,7 @@ def checkout(request, total=0, quantity=0, cart_items=None):
 
     except ObjectDoesNotExist:
         pass
+    
 
     context = {
         'total' : total,

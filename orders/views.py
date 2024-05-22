@@ -12,6 +12,7 @@ from accounts.models import Wallet
 from django.contrib.auth.decorators import login_required
 from datetime import datetime
 from carts.models import Cart
+from decimal import Decimal
 from django.http import JsonResponse
 import json
 from django.db.models import Q
@@ -28,7 +29,7 @@ def payments(request):
         user = request.user,
         payment_id = body['transID'],
         payment_method = body['payment_method'],
-        amount_paid = order.order_total,
+        amount_paid = order.final_total,
         status = body['status'],
 
     )
@@ -80,7 +81,7 @@ def place_order(request, total=0, quantity=0):
         current_datetime = datetime.now()
         # Get the selected address and coupon from the request
         selected_address_id = request.POST.get('selected_address')
-        coupon = request.POST.get('coupon')
+        coupon = request.POST.get('coupon_code')
         try:
             # Retrieve the user's wallet and get the wallet balance
             wallet = Wallet.objects.get(account=current_user)
@@ -96,14 +97,16 @@ def place_order(request, total=0, quantity=0):
         if cart_count <= 0:
             return redirect('store')
 
+        grand_total = 0
+        tax = 0
+        final_total = 0  # Initialize final_total here
+        discount = 0
     
         if selected_address_id:
             selected_address = get_object_or_404(Address, id=selected_address_id)
-            grand_total = 0
-            tax = 0
-            final_total = 0  # Initialize final_total here
+        
             for cart_item in cart_items:
-                total += (cart_item.product.price * cart_item.quantity)
+                total +=(cart_item.product.price_after_discount() * cart_item.quantity)
                 quantity += cart_item.quantity
             tax = (2 * total)/100
             grand_total = total + tax
@@ -115,16 +118,19 @@ def place_order(request, total=0, quantity=0):
                 current_datetime = timezone.now()
                 if coupon.valid_from <= current_datetime <= coupon.valid_to:
                     discount = coupon.discount
-                    final_total = grand_total - discount
+                    final_total = grand_total - Decimal(discount)
                     # Ensure grand total is not negative
                     final_total = max(0, final_total)
                 else:
                     discount = 0
+                    final_total = grand_total
+                    
             except Coupon.DoesNotExist:
                 discount = 0
                 final_total = grand_total
                 pass  # Coupon does not exist
-           
+            
+        if selected_address_id and coupon_code:    
             order = Order.objects.create(
                 user=current_user,
                 first_name=current_user.first_name,
@@ -173,13 +179,25 @@ def place_order(request, total=0, quantity=0):
                 'discount' : discount,
                 'final_total': final_total,
                 'wallet_balance' : wallet_balance,
-
+                'error_message': None  # Set error message to None initially
 
             }
             
             return render(request, 'orders/payments.html', context)
         else:
-            return HttpResponse("Please select an address.")
+            # Set error message and pass address details to context
+            error_message = "Please select an address and coupon. If no valid coupon, enter no coupon."
+            addresses = Address.objects.filter(user=current_user)  # Fetch user's addresses
+            context = {
+                'cart_items': cart_items,
+                'total': total,
+                'tax': tax,
+                'grand_total': grand_total,
+                'wallet_balance': wallet_balance,
+                'addresses': addresses,
+                'error_message': error_message
+            }
+            return render(request, 'store/checkout.html', context)
     else:
         return redirect('checkout')
 
@@ -187,13 +205,12 @@ def order_complete(request):
     order_number = request.GET.get('order_number')
     transID = request.GET.get('payment_id')
 
-    
-
     try:
         order = Order.objects.get(order_number=order_number, is_ordered=True)
-        # Update the order status to 'ACCEPTED'
-        order.status = 'COMPLETED'
+        # Update the order status to 'COMPLETED'
+        order.status = 'Completed'  # 'Completed' instead of 'COMPLETED' for consistency with the model
         order.save()
+
         ordered_products = OrderProduct.objects.filter(order_id=order.id)
 
         subtotal = 0
@@ -201,14 +218,26 @@ def order_complete(request):
             subtotal += i.product_price * i.quantity
 
         payment = Payment.objects.get(payment_id=transID)
-        context = {
-            'order' : order,
-            'ordered_products' : ordered_products,
-            'order_number' : order.order_number,
-            'transID' : payment.payment_id,
-            'payment' : payment,
-            'subtotal' : subtotal,
 
+        # Retrieve coupon discount
+        coupon_discount = 0
+        if order.coupon:
+            try:
+                coupon = Coupon.objects.get(code=order.coupon)
+                # Check if the coupon is valid
+                if coupon.valid_from <= order.created_at <= coupon.valid_to:
+                    coupon_discount = coupon.discount
+            except Coupon.DoesNotExist:
+                pass
+
+        context = {
+            'order': order,
+            'ordered_products': ordered_products,
+            'order_number': order.order_number,
+            'transID': payment.payment_id,
+            'payment': payment,
+            'subtotal': subtotal,
+            'coupon_discount': coupon_discount,  # Pass coupon discount to the context
         }
 
         return render(request, 'orders/order_complete.html', context)
@@ -223,11 +252,21 @@ def cash_on_delivery(request, order_number):
 
     # Update the order status to indicate payment confirmation
     order.is_ordered = True
-    order.save()
-
-
-    # Update the order status to 'ACCEPTED'
     order.status = 'COMPLETED'
+    order.save()
+   
+
+    # Create a new Payment instance for cash on delivery payment method
+    payment = Payment.objects.create(
+        user=request.user,
+        payment_id=f'COD-{order.order_number}',
+        payment_method='COD',
+        amount_paid=order.final_total,
+        status='Pending'
+    )
+
+    # Assign the Payment instance to the order
+    order.payment = payment
     order.save()
 
     
@@ -241,11 +280,19 @@ def cash_on_delivery(request, order_number):
         orderproduct.user_id = request.user.id
         orderproduct.product_id = item.product_id
         orderproduct.quantity = item.quantity
-        orderproduct.product_price = item.product.price
+        orderproduct.product_price = item.product.price 
         orderproduct.ordered = True
         orderproduct.save()
 
-
+        cart_item = CartItem.objects.get(id=item.id)
+        product_variation = cart_item.variations.all()
+        orderproduct = OrderProduct.objects.get(id=orderproduct.id)
+        orderproduct.variations.set(product_variation)
+        orderproduct.save()
+        # Update product stock
+        product = Product.objects.get(id=item.product_id)
+        product.stock -= item.quantity
+        product.save()
 
 
 
@@ -259,7 +306,8 @@ def cash_on_delivery(request, order_number):
     # Render the confirm_payment.html template with the order details
     context = {
         'order_number': order_number,
-        'order': order
+        'order': order,
+        'payment': payment,
     }
     return render(request, 'orders/confirmpayment.html', context)
 
@@ -289,6 +337,19 @@ def add_to_wallet(request, order_number):
         order.is_ordered = True
         order.save()
 
+        # Create a new Payment instance for wallet payment method
+        payment = Payment.objects.create(
+            user=request.user,
+            payment_id=f'WAL-{order.order_number}',
+            payment_method='Wallet',
+            amount_paid=order.final_total,
+            status='Completed'  # Assuming payment is completed since it's deducted from the wallet
+        )
+
+        # Assign the Payment instance to the order
+        order.payment = payment
+        order.save()
+
         # Retrieve cart items and add them to the order
         cart_items = CartItem.objects.filter(user=request.user)
         for item in cart_items:
@@ -301,13 +362,25 @@ def add_to_wallet(request, order_number):
             orderproduct.ordered = True
             orderproduct.save()
 
+            cart_item = CartItem.objects.get(id=item.id)
+            product_variation = cart_item.variations.all()
+            orderproduct = OrderProduct.objects.get(id=orderproduct.id)
+            orderproduct.variations.set(product_variation)
+            orderproduct.save()
+        # Reduce the quantity of the sold products
+        product = Product.objects.get(id=item.product_id)
+        product.stock -= item.quantity
+        product.save()
+    #clear cart
+
         # Delete all the current user's cart items
         CartItem.objects.filter(user=request.user).delete()
 
         # Render the confirm_payment.html template with the order details
         context = {
             'order_number': order_number,
-            'order': order
+            'order': order,
+            'payment': payment  # Include the payment details in the context
         }
 
         messages.success(request, "Order placed successfully. Amount deducted from your wallet.")

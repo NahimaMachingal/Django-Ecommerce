@@ -90,11 +90,14 @@
               <dd class="text-right"> ${{tax}}</dd>
             </dl>
             <dl class="dlist-align">
+            
               <dt> Coupon Discount:</dt>
               {% if order.coupon %}
               <dd class="text-right"> ${{ discount }}</dd>
+              
               {% else %}
               <dd class="text-right">0</dd>
+              <br>
             
             {% endif %}
             </dl>
@@ -106,7 +109,9 @@
             <p class="text-center mb-3">
               <img src="{% static './images/misc/payments.png' %}" height="26">
             </p>
+            {% if final_total < 1000 %}
             <a href="{% url 'cash_on_delivery' order.order_number %}" class="btn btn-primary btn-block">Cash On Delivery</a>
+            {% endif %}
            <br>
            {% if wallet_balance %}
            <a href="{% url 'add_to_wallet' order.order_number %}" class="btn btn-primary btn-block"> Wallet Pay ({{ wallet_balance }})</a>
@@ -153,7 +158,7 @@
 }
 
 
-  var amount = "{{ order.order_total }}"// Assuming you want to use the order total for payment
+  var amount = "{{ order.final_total }}"// Assuming you want to use the order total for payment
   var url = "{% url 'payments' %}"
   var csrftoken = getCookie('csrftoken');
   var orderID = "{{ order.order_number }}"

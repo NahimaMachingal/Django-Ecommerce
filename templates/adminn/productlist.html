@@ -11,7 +11,9 @@
                 <th>Name</th>
                 <th>Description</th>
                 <th>Price</th>
+                <th>Discount</th>
                 <th>Stock</th>
+                <th>Images</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -22,7 +24,13 @@
                 <td>{{ product.product_name }}</td>
                 <td>{{ product.description }}</td>
                 <td>{{ product.price }}</td>
+                <td>{{ product.discount }}</td>
                 <td>{{ product.stock }}</td>
+                <td>
+                {% for image in product.images.all %}
+                <img src="{{ image.image.url }}" alt="{{ product.product_name }}" class="img-thumbnail" style="max-width: 100px;">
+                {% endfor %}
+            </td>
                 <td>
                 <div class="btn-group" role="group">
                     <a href="{% url 'adminn:editproduct' product.id %}" class="btn btn-sm btn-primary">Edit</a>

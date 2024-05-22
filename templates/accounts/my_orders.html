@@ -32,7 +32,7 @@
     </thead>
     <tbody>
     {% for order in orders %}
-
+            {% if order.status != 'New' %}
         <tr>
             <th scope="row"><a href="{% url 'order_detail' order.order_number %}">{{order.order_number}}</a></th>
             <td>{{order.full_name}}</td>
@@ -42,11 +42,29 @@
             <td>
                 <div class="btn-group" role="group">
                     {% if order.status == 'COMPLETED' or order.status == 'Completed' %}
-                    <a href="{% url 'cancel_orderr' order_number=order.order_number %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel the order');">Cancel</a>
+                    <a href="{% url 'cancel_orderr' order_number=order.order_number %}" class="btn btn-sm btn-danger  btn-block" onclick="return confirm('Are you sure you want to cancel the order');" style="font-size: 14px;">Cancel</a>
+                    {% elif order.status == 'Cancelled' %}
+                    <a href="{% url 'cancel_orderr' order_number=order.order_number %}" class="btn btn-sm btn-danger  btn-block"  style="font-size: 14px;">Cancelled</a>
                     {% endif %}
+                    <!-- Add a spacer with some margin -->
+   
+    <div class="spacer" style="margin-left: 10px;"></div>
+                    
+                                        {% if order.status == 'Delivered' %}
+                                            <form action="{% url 'return_order' order_number=order.order_number %}" method="post">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="order_number" value="{{ order.order_number }}">
+                                                <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('Are you sure you want to return the order');"style="font-size: 14px;">Return</button>
+                                            </form>
+                                        {% elif order.status == 'Returned' %}
+                    <a href="{% url 'return_order' order_number=order.order_number %}" class="btn btn-sm btn-danger  btn-block"  style="font-size: 14px;">Returned</a>
+
+                                        {% endif %}
+
                 </div>
             </td>
         </tr>
+        {% endif %}
     {% endfor %}
     </tbody>
 </table>

@@ -33,19 +33,14 @@
                                         <li><strong>Order Date: </strong>{{ order.created_at }}</li>
                                         {% if payment.payment_method == 'PayPal' %}
                                         <li><strong>Payment: </strong>Paypal</li>
+
+                                        {% elif payment.payment_method == 'Wallet' %}
+                                        <li><strong>Payment: </strong>Wallet</li>
                                         {% else %}
                                         <li><strong>Payment: </strong>COD</li>
                                         {% endif %}
 
-                                        {% if order.status == 'Completed' %}
-                                        <li>
-                                            <form action="{% url 'return_order' %}" method="post">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="order_number" value="{{ order.order_number }}">
-                                                <button type="submit" class="btn btn-danger">Return</button>
-                                            </form>
-                                        </li>
-                                        {% endif %}
+                                        
                                     </ul>
                                 </div>
                             </div>
@@ -62,7 +57,8 @@
                                         <tbody>
                                             {% for item in order_detail %}
                                             <tr>
-                                                <td>{{item.product.product_name}}
+                                                <td>
+                                                    {{item.product.product_name}}
                                                     <p class="text-muted small">
                                                         {% if item.variations.all %}
                                                         {% for i in item.variations.all %}
@@ -72,7 +68,7 @@
                                                     </p>
                                                 </td>
                                                 <td class="text-center">{{ item.quantity }}</td>
-                                                <td class="text-center">$ {{ item.product_price }}</td>
+                                                <td class="text-center">$ {{ item.product.price_after_discount }}</td>
                                             </tr>
                                             {% endfor %}
                                         </tbody>
@@ -85,9 +81,20 @@
                                                 <th colspan="2" class="text-right">Tax</th>
                                                 <th class="text-center">${{ order.tax }}</th>
                                             </tr>
+
+                                            <tr>
+                                                <th colspan="2" class="text-right">Coupon</th>
+                                                <th class="text-center">${{order.coupon}}</th>
+                                            </tr>
+
+                                            <tr>
+                                                <th colspan="2" class="text-right">Coupon Discount</th>
+                                                <th class="text-center">
+                                                ${{coupon_discount}}</th>
+                                            </tr>
                                             <tr>
                                                 <th colspan="2" class="text-right">Grand Total</th>
-                                                <th class="text-center">${{ order.order_total }}</th>
+                                                <th class="text-center">${{ order.final_total }}</th>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -99,5 +106,7 @@
             </div>
         </div>
     </div>
+    <a href="{% url 'generate_invoice_pdf' order_number=order.order_number %}" class="btn btn-primary">Download Invoice</a>
+
 </div>
 {% endblock content %}

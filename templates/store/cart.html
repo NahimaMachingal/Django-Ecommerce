@@ -73,7 +73,9 @@
 							<input type="hidden" name="{{ item.variation_category | lower }}" value="{{ item.variation_value | capfirst }}">
 							
 							{% endfor %}
+							{% if cart_item.quantity < cart_item.product.stock %} 
 							<button class="btn btn-light" type="submit" id="button-minus"> <i class="fa fa-plus"></i> </button>
+							{% endif %}
 							</form>
 							</div>
 						</div> <!-- input-group.// -->
@@ -82,7 +84,7 @@
 	<td> 
 		<div class="price-wrap"> 
 			<var class="price">${{ cart_item.sub_total }}</var> 
-			<small class="text-muted"> ${{cart_item.product.price }} each </small> 
+			<small class="text-muted"> ${{ cart_item.product.price_after_discount }} each </small> 
 		</div> <!-- price-wrap .// -->
 	</td>
 	<td class="text-right"> 
@@ -143,6 +145,9 @@
 </div> <!-- container .//  -->
 </section>
 <!-- ========================= SECTION CONTENT END// ========================= -->
+
+
+
 </body>
 </html>
 

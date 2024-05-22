@@ -32,6 +32,12 @@ class Order(models.Model):
         ('Delivered', 'Delivered'),
         ('Returned', 'Returned'),
     )
+    PAYMENT = (
+        ('COD', 'COD'),
+        ('Razorpay', 'Razorpay'),
+        ('Wallet', 'Wallet'),
+        ('PayPal', 'Paypal'),
+    )
     user = models.ForeignKey(Account, on_delete=models.CASCADE)
     payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, blank=True, null=True)
     coupon = models.CharField(max_length=100, null=True)
@@ -72,6 +78,9 @@ class OrderProduct(models.Model):
     ordered = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def subtotal(self):
+        return self.product_price * self.quantity
 
     def __str__(self):
         return self.product.product_name

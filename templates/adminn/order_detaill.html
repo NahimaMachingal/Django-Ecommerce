@@ -35,12 +35,14 @@
                                         <li><strong>Order Date: </strong>{{ order.created_at }}</li>
                                         {% if payment.payment_method == 'PayPal' %}
                                         <li><strong>Payment: </strong>Paypal</li>
+                                        {% elif payment.payment_method == 'Wallet' %}
+                                        <li><strong>Payment: </strong>Wallet</li>
                                         {% else %}
                                         <li><strong>Payment: </strong>COD</li>
                                         {% endif %}
-                                        {% if order.status == 'Completed' %}
+                                        {% if order.status == 'Delivered' %}
                                         <li>
-                                            <form action="{% url 'return_order' %}" method="post">
+                                            <form action="{% url 'return_order' order_number=order.order_number %}" method="post">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="order_number" value="{{ order.order_number }}">
                                                 <button type="submit" class="btn btn-danger">Return</button>
@@ -74,7 +76,7 @@
                                                     </p>
                                                 </td>
                                                 <td class="text-center">{{ item.quantity }}</td>
-                                                <td class="text-center">$ {{ item.product_price }}</td>
+                                                <td class="text-center">$ {{ item.product.price_after_discount }}</td>
                                             </tr>
                                             {% endfor %}
                                         </tbody>

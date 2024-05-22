@@ -1,10 +1,26 @@
 from django.shortcuts import render,redirect, get_object_or_404
 from . forms import RegistrationForm, AddressForm
-from . models import Account, UserProfile, Address
+from . models import Account, UserProfile, Address, Wallet
+from orders.models import Coupon
+import io
+from django.db.models import Prefetch
+from store.models import Product, Variation
+from reportlab.pdfgen import canvas
+from django.template.loader import render_to_string
+import pdfkit  # You need to install the pdfkit library
+from django.template.loader import get_template
+from decimal import Decimal
+from django.http import FileResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
 from orders.models import Order
 from django.contrib import messages,auth
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.utils import timezone
+from xhtml2pdf import pisa
+from datetime import timedelta
 from django.urls import reverse
 from django.http import request
 from .utils import generate_otp, send_otp
@@ -198,7 +214,7 @@ def activate(request, uidb64, token):
    
 @login_required(login_url = 'loginn')  
 def dashboard(request):
-    orders = Order.objects.order_by('-created_at').filter(user_id=request.user.id, is_ordered=True)
+    orders = Order.objects.order_by('-created_at').filter(user_id=request.user.id).exclude(status='New')
     orders_count = orders.count()
     user_full_name = request.user.full_name()  # Corrected this line
 
@@ -212,6 +228,21 @@ def dashboard(request):
     
     return render(request, 'accounts/dashboard.html', context)
 
+@login_required(login_url='loginn')
+def user_wallet(request):
+    try:
+        wallet = Wallet.objects.get(account=request.user)
+    except ObjectDoesNotExist:
+        # If wallet doesn't exist, create a new one for the user
+        wallet = Wallet.objects.create(account=request.user, wallet_balance=0.00)
+    
+    # Fetching orders with payment method 'Wallet'
+    orders_wallet = Order.objects.filter(user=request.user, payment__payment_method='Wallet').order_by('-created_at')
+    
+    return render(request, 'accounts/user_wallet.html', {'wallet': wallet, 'orders_wallet': orders_wallet})
+
+
+@login_required(login_url = 'loginn')
 def forgotpassword(request):
     if request.method == "POST":
         email = request.POST['email']
@@ -273,7 +304,7 @@ def resetpassword(request):
 
 @login_required(login_url='loginn')
 def my_orders(request):
-    orders = Order.objects.filter(user=request.user, is_ordered = True).order_by('-created_at')
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
     context = {
         'orders' : orders,
 
@@ -379,55 +410,205 @@ def order_detail(request, order_id):
     order = Order.objects.get(order_number = order_id)
     subtotal = 0
     for i in order_detail:
-        subtotal += i.product_price * i.quantity
+        product = Product.objects.get(id=i.product_id)  # Retrieve the product
+        subtotal += product.price_after_discount() * i.quantity  # Calculate subtotal using price_after_discount
+
 
     # Fetching payment method from the related Payment object
     payment_method = order.payment.payment_method if order.payment else None
 
+    # Retrieve coupon discount
+    coupon_discount = 0
+    if order.coupon:
+        try:
+            coupon = Coupon.objects.get(code=order.coupon)
+                # Check if the coupon is valid
+            if coupon.valid_from <= order.created_at <= coupon.valid_to:
+                coupon_discount = coupon.discount
+        except Coupon.DoesNotExist:
+            pass
     context = {
         'order_detail' : order_detail,
         'order' : order,
         'subtotal' : subtotal,
         'payment': order.payment,
         'payment_method': payment_method,
+        'coupon_discount': coupon_discount,  # Pass coupon discount to the context
         
     }
     
 
     return render(request, 'accounts/order_detail.html', context)
 
-def return_order(request):
-    if request.method == 'POST':
-        order_number = request.POST.get('order_number')
+def invoice(request, order_id):
+    order_detail = OrderProduct.objects.filter(order__order_number=order_id).prefetch_related('product')
+    order = Order.objects.get(order_number=order_id)
+    subtotal = 0
+    for i in order_detail:
+        
+        subtotal += i.product.price_after_discount() * i.quantity  # Calculate subtotal using price_after_discount
+        print("subtotal is ", subtotal)
+    # Fetching payment method from the related Payment object
+    payment_method = order.payment.payment_method if order.payment else None
+
+    # Retrieve coupon discount
+    coupon_discount = 0
+    if order.coupon:
         try:
-            order = Order.objects.get(order_number=order_number)
-            # Check if the order status is 'Completed'
-            if order.status == 'Completed':
-                # Set the order status to 'Returned'
-                order.status = 'Returned'
-                order.save()
-                return redirect('my_orders')
-        except Order.DoesNotExist:
-            # Handle the case where the order does not exist
+            coupon = Coupon.objects.get(code=order.coupon)
+            # Check if the coupon is valid
+            if coupon.valid_from <= order.created_at <= coupon.valid_to:
+                coupon_discount = coupon.discount
+        except Coupon.DoesNotExist:
             pass
-    # Redirect to a specific URL after processing the return request
-    return redirect('my_orders')  # Replace 'order_return_confirmation' with the desired URL name
+
+    print("Order Detail:", order_detail)
+    print("Order:", order)
+    print("Subtotal:", subtotal)
+    print("Payment Method:", payment_method)
+    print("Coupon Discount:", coupon_discount)
+
+    context = {
+        'order_detail': order_detail,
+        'order': order,
+        'subtotal': subtotal,
+        'payment_method': payment_method,
+        'coupon_discount': coupon_discount,
+    }
+
+    return render(request, 'accounts/invoice.html', context)
+
+
+@login_required(login_url='loginn') 
+def generate_invoice_pdf(request, order_number):
+    # Fetch the order details and other necessary data
+    order = Order.objects.get(order_number=order_number)
+    order_detail = OrderProduct.objects.filter(order__order_number=order_number)
+
+    subtotal = 0
+    for i in order_detail:
+        
+        subtotal += i.product.price_after_discount() * i.quantity  # Calculate subtotal using price_after_discount
+        print("subtotal is ", subtotal)
+
+    # Fetching payment method from the related Payment object
+    payment_method = order.payment.payment_method if order.payment else None
+
+    # Retrieve coupon discount
+    coupon_discount = 0
+    if order.coupon:
+        try:
+            coupon = Coupon.objects.get(code=order.coupon)
+            # Check if the coupon is valid
+            if coupon.valid_from <= order.created_at <= coupon.valid_to:
+                coupon_discount = coupon.discount
+        except Coupon.DoesNotExist:
+            pass
+
+    # Render the invoice HTML template with the order data
+    rendered_html = render_to_string('accounts/invoice.html', {
+        'order_detail': order_detail,
+        'order': order,
+        'payment': order.payment,
+        'subtotal': subtotal,
+        'payment_method': payment_method,
+        'coupon_discount': coupon_discount,
+    })
+
+    # Create an HttpResponse object with PDF content type
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'attachment; filename="invoice.pdf"'
+
+    # Convert the rendered HTML to PDF and write to the response
+    pisa.CreatePDF(rendered_html, dest=response)
+    
+    return response
+
+
+
+
+def return_order(request, order_number):
+    order = get_object_or_404(Order, order_number=order_number)
+    #if order.status != "Delivered":
+       # messages.error(request, "Order has not been delivered yet")
+       # return redirect("my_orders")
+
+    if order.status == 'Returned':
+        messages.error(request, "Order has already been returned")
+    elif order.status == 'New':
+        messages.error(request, "Order has not been delivered yet")
+    elif order.status == 'Completed':
+        messages.error(request, "Order has not been delivered yet")
+    
+    elif order.status == "Cancelled":
+        messages.error(request, "Order has already been cancelled")
+    elif order.payment != "Paid":
+        order.status = "Returned"
+        order.save()
+        messages.error(request, "Order has been returned.")
+    elif order.created_at + timedelta(days=3) < timezone.now():
+        messages.error(request, "Cannot return order after 3 days")
+    elif order.status == "Delivered":
+        for item in order.order_items.all():
+            item.product.stock += item.quantity
+            item.product.save()
+        order.status = "Returned"
+        order.save()
+        messages.success(
+            request, f"Return successful.")
+        
+    # Retrieve the final_total from the Order model
+    final_total = order.final_total
+    # Retrieve the user's wallet if it exists, or create a new wallet if it doesn't exist
+    wallet, created = Wallet.objects.get_or_create(account=request.user)
+    
+    # If the wallet was just created, set the wallet balance to the final_total
+    if created:
+        wallet.wallet_balance = final_total
+    else:
+        # If the wallet already exists, add the final_total to the existing wallet balance
+        wallet.wallet_balance += final_total
+
+    wallet.save()
+
+    return redirect("my_orders")
+
+
 
 def cancel_orderr(request, order_number):
     # Retrieve the order based on the order number
     order = get_object_or_404(Order, order_number=order_number)
-    
+    if order.status == 'Cancelled':
+        messages.error(request, "Order has already been Cancelled")
+    elif order.status == "New":
+        messages.error(request, "Order has not been Completed yet")
+        return redirect("my_orders")
     # Update order status to 'Cancelled' and set is_ordered to False
-    order.status = 'Cancelled'
-    order.is_ordered = False
-    order.save()
+    else:
+        order.status = 'Cancelled'
+        order.is_ordered = False
+        order.save()
+    
 
     # Retrieve order items and update product stock
-    order_items = OrderProduct.objects.filter(order=order)
-    for order_item in order_items:
-        product = order_item.product
-        product.stock += order_item.quantity  # Increase product stock
-        product.save()
+        order_items = OrderProduct.objects.filter(order=order)
+        for order_item in order_items:
+            product = order_item.product
+            product.stock += order_item.quantity  # Increase product stock
+            product.save()
+    # Retrieve the final_total from the Order model
+    final_total = order.final_total
+    # Retrieve the user's wallet if it exists, or create a new wallet if it doesn't exist
+    wallet, created = Wallet.objects.get_or_create(account=request.user)
+    
+    # If the wallet was just created, set the wallet balance to the final_total
+    if created:
+        wallet.wallet_balance = final_total
+    else:
+        # If the wallet already exists, add the final_total to the existing wallet balance
+        wallet.wallet_balance += final_total
+
+    wallet.save()
     messages.success(request, "Order has been cancelled successfully.")
     return redirect('my_orders')  # Redirect to a success page after cancellation
     

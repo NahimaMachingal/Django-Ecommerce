@@ -3,13 +3,21 @@
 from django import forms
 from store.models import Product, ProductImage
 from django.forms import modelformset_factory
+from django.core.validators import MinValueValidator, MaxValueValidator
 from category.models import Category
 from orders.models import Coupon
 
 class ProductForm(forms.ModelForm):
+    discount = forms.DecimalField(
+        label='Discount',
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
     class Meta:
         model = Product
-        fields = ['product_name', 'slug', 'description', 'price', 'stock', 'is_available', 'category']
+        fields = ['product_name', 'slug', 'description', 'price', 'discount', 'stock', 'is_available', 'category']
         widgets = {
             'product_name': forms.TextInput(attrs={'class': 'form-control'}),
             'slug': forms.TextInput(attrs={'class': 'form-control'}),
@@ -32,9 +40,16 @@ class ProductImageForm(forms.ModelForm):
         fields = ['images']
     
 class CategoryForm(forms.ModelForm):
+    category_discount = forms.DecimalField(
+        label='Category_Discount',
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
     class Meta:
         model = Category
-        fields = ['category_name', 'slug', 'description', 'category_image']
+        fields = ['category_name', 'slug', 'description', 'category_image', 'category_discount']
 
 
 class CouponForm(forms.ModelForm):

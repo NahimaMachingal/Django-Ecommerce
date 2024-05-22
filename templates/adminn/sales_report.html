@@ -115,7 +115,8 @@
                         <tr>
                             <th>Order Number</th>
                             <th>Customer</th>
-                            <th>Total Value</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
                             <th>Discounted Total</th>
                             <th>Coupon</th>
                             <th>Status</th>
@@ -124,20 +125,24 @@
                     </thead>
                     <tbody>
                         {% for order in orders %}
+                            {% for order_product in order.orderproduct_set.all %}
                             <tr>
                                 <td>{{ order.order_number }}</td>
                                 <td>{{ order.user }}</td>
-                                <td>{{ order.order_total }}</td>
+                                <td>{{ order_product.product_price }}</td>
+                                <td>{{ order_product.quantity }}</td>
                                 <td>{{ order.final_total }}</td>
                                 <td>{{ order.coupon }}</td>
                                 <td>{{ order.status }}</td>
                                 <td>{{ order.created_at }}</td>
                             </tr>
+                            {% endfor %}
                         {% empty %}
                             <tr>
                                 <td colspan="7" class="text-center">No orders found for the selected period.</td>
                             </tr>
                         {% endfor %}
+                        
                     </tbody>
                 </table>
             </div>
@@ -146,8 +151,9 @@
    
     <div class="row mt-4">
         <div class="col">
-            <a href="" class="btn btn-primary">Download PDF</a>
-            <a href="" class="btn btn-primary">Download Excel</a>
+            <a href="{% url 'adminn:download_sales_reportpdf' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-primary">Download PDF</a>
+        <a href="{% url 'adminn:download_sales_reportexcel' %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-primary">Download Excel</a>
+
         </div>
     </div>
 </div>

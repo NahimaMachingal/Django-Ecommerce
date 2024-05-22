@@ -34,7 +34,11 @@
                 <td>{{ order.created_at }}</td>
                 <td>
                    
-                    <a href="{% url 'adminn:cancelorder' order.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this order?');">Cancel</a>
+                    {% if order.status == 'COMPLETED'  or order.status == 'Completed'%} 
+    <a href="{% url 'adminn:cancelorder' order.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this order?');">Cancel</a>
+{% endif %}
+
+
                 </td>
                 
             </tr>

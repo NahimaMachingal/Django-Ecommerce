@@ -24,7 +24,7 @@
                         <!-- Start .row -->
                         <div class="col-lg-6">
                             <!-- col-lg-6 start here -->
-                            <div class="invoice-logo"><img src="" alt="Invoice logo" style="max-height: 40px;"></div>
+                            <div class="invoice-logo"><img src="" alt="" style="max-height: 40px;"></div>
                         </div>
                         <!-- col-lg-6 end here -->
                         <div class="col-lg-6">
@@ -87,14 +87,35 @@
                                                 <th colspan="2" class="text-right">Sub Total:</th>
                                                 <th class="text-center">${{subtotal}}</th>
                                             </tr>
+
+                                            <tr>
+                                                <th colspan="2" class="text-right">Price After Discount:</th>
+                                                <th class="text-center">
+        ${% for item in ordered_products %}
+            {{ item.product.price_after_discount }}
+            {% if not forloop.last %} + {% endif %}
+        {% endfor %}
+    </th>
+                                            </tr>
                                             <tr>
                                                 <th colspan="2" class="text-right">Tax:</th>
                                                 <th class="text-center">${{order.tax}}</th>
                                             </tr>
+                                            
+                                            <tr>
+                                                <th colspan="2" class="text-right">Coupon</th>
+                                                <th class="text-center">${{order.coupon}}</th>
+                                            </tr>
+
+                                            <tr>
+                                                <th colspan="2" class="text-right">Coupon Discount</th>
+                                                <th class="text-center">${{coupon_discount}}
+</th>
+                                            </tr>
 
                                             <tr>
                                                 <th colspan="2" class="text-right">Grand Total:</th>
-                                                <th class="text-center">${{order.order_total}}</th>
+                                                <th class="text-center">${{order.final_total}}</th>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -104,12 +125,7 @@
                                 <p class="text-center">Thank you for shopping with us!</p>
                             </div>
 
-                            <div class="text-center">
-    <form action="{% url 'cancell_order' order_number=order.order_number %}" method="post">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Cancel Order</button>
-    </form>
-</div>
+                            
                         </div>
                         <!-- col-lg-12 end here -->
                     </div>

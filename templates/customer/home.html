@@ -36,7 +36,19 @@
 						<a href="{{product.get_url}}"> <img class="product_img img-fluid w-100 big_img" src="{{ product.images.first.image.url }}" alt="{{ product.product.name }}"> </a>
 						<figcaption class="info-wrap">
 							<a href="{{product.get_url}}" class="title">{{product.product_name}}</a>
-							<div class="price mt-1">AED {{product.price}}</div> <!-- price-wrap.// -->
+							<div class="price mt-1">{% if product.discount > 0 %}
+                        
+                        <del class="price-old">${{ product.price }}</del>
+                        <span class="price-discount">${{ product.price_after_discount }}</span>
+						<span class="discount-label">({{ product.discount }}% off)</span>
+
+					{% elif product.category.category_discount > 0 %}
+						<del class="price-old">${{ product.price }}</del>
+                        <span class="price-discount">${{ product.price_after_discount }}</span>
+						<span class="discount-label">({{ product.category.category_discount }}% off)</span>	
+                    {% else %}
+                        <span class="price">${{ product.price }}</span>
+                    {% endif %}</div> <!-- price-wrap.// -->
 						</figcaption>
 					</div>
 				</div> <!-- col.// -->
