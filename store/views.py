@@ -49,7 +49,14 @@ def store(request, category_slug=None):
 
 
 def product_detail(request, category_slug, product_slug):
-    single_product = None  # Initialize single_product as None
+    # Get the single product or return 404 if not found
+    single_product = get_object_or_404(Product, category__slug=category_slug, slug=product_slug)
+
+    # Check if the product is in the cart
+    in_cart = CartItem.objects.filter(cart__cart_id=_cart_id(request), product=single_product).exists()
+
+    
+
     if request.user.is_authenticated:  # Check if the user is authenticated
         try:
             single_product = Product.objects.get(category__slug=category_slug, slug=product_slug)
