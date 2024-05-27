@@ -22,7 +22,7 @@ def _cart_id(request):
         cart = request.session.create()
     return cart
     
-
+@login_required(login_url='loginn')
 def add_cart(request, product_id):
     current_user = request.user
     product = Product.objects.get(id=product_id) #get the product
@@ -174,7 +174,7 @@ def remove_cart_item(request, product_id, cart_item_id):
         cart_item = CartItem.objects.get(product=product, cart=cart, id=cart_item_id)
     cart_item.delete()
     return redirect('cart')
-
+@login_required(login_url='loginn')
 def cart(request, total=0, quantity=0, cart_items=None):
     try:
         tax = 0  # Initialize tax variable outside of try block
