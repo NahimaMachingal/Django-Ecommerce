@@ -81,7 +81,7 @@ def place_order(request, total=0, quantity=0):
         current_datetime = datetime.now()
         # Get the selected address and coupon from the request
         selected_address_id = request.POST.get('selected_address')
-        coupon = request.POST.get('coupon_code')
+        
         try:
             # Retrieve the user's wallet and get the wallet balance
             wallet = Wallet.objects.get(account=current_user)
@@ -115,7 +115,7 @@ def place_order(request, total=0, quantity=0):
         if coupon_code:
             try:
                 coupon = Coupon.objects.get(code=coupon_code)
-                current_datetime = timezone.now()
+                
                 if coupon.valid_from <= current_datetime <= coupon.valid_to:
                     discount = coupon.discount
                     final_total = grand_total - Decimal(discount)
@@ -129,8 +129,11 @@ def place_order(request, total=0, quantity=0):
                 discount = 0
                 final_total = grand_total
                 pass  # Coupon does not exist
+        # Set final_total to grand_total if no coupon is entered
+        if not coupon_code:
+            final_total = grand_total
             
-        if selected_address_id and coupon_code:    
+        if selected_address_id and (coupon_code or not coupon_code):    
             order = Order.objects.create(
                 user=current_user,
                 first_name=current_user.first_name,
@@ -186,7 +189,7 @@ def place_order(request, total=0, quantity=0):
             return render(request, 'orders/payments.html', context)
         else:
             # Set error message and pass address details to context
-            error_message = "Please select an address and coupon. If no valid coupon, enter no coupon."
+            error_message = "Please select an address"
             addresses = Address.objects.filter(user=current_user)  # Fetch user's addresses
             context = {
                 'cart_items': cart_items,
