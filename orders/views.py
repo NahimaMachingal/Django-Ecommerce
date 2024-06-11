@@ -76,9 +76,9 @@ def payments(request):
 
 def place_order(request, total=0, quantity=0):
     if request.method == "POST":
+        current_datetime = timezone.now()
         current_user = request.user
-        # Get the current date and time
-        current_datetime = datetime.now()
+        
         # Get the selected address and coupon from the request
         selected_address_id = request.POST.get('selected_address')
         

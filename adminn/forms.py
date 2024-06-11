@@ -1,7 +1,7 @@
 # forms.py
 
 from django import forms
-from store.models import Product, ProductImage
+from store.models import Product, ProductImage, Variation
 from django.forms import modelformset_factory
 from django.core.validators import MinValueValidator, MaxValueValidator
 from category.models import Category
@@ -51,6 +51,40 @@ class CategoryForm(forms.ModelForm):
         model = Category
         fields = ['category_name', 'slug', 'description', 'category_image', 'category_discount']
 
+variation_category_choice = (
+    ('color', 'Color'),
+    ('size', 'Size'),
+)
+
+
+class VariationForm(forms.ModelForm):
+    product = forms.ModelChoiceField(
+        queryset=Product.objects.all(),
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    variation_category = forms.ChoiceField(
+        choices=variation_category_choice,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    variation_value = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    is_active = forms.BooleanField(
+        initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+
+    class Meta:
+        model = Variation
+        fields = ['product', 'variation_category', 'variation_value', 'is_active']
+        widgets = {
+            'created_at': forms.DateTimeInput(attrs={'type': 'hidden'}),
+        }
+
+    def _init_(self, *args, **kwargs):
+        super()._init_(*args, **kwargs)
+        self.fields['variation_value'].widget.attrs.update({'class': 'form-control'})
 
 class CouponForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
@@ -64,3 +98,16 @@ class CouponForm(forms.ModelForm):
             'valid_from': forms.DateTimeInput(attrs={'type': 'datetime-local' , 'class': 'form-control'}),
             'valid_to': forms.DateTimeInput(attrs={'type': 'datetime-local' , 'class': 'form-control'}),
         }
+
+
+class OrderFilterForm(forms.Form):
+    STATUS_CHOICES = (
+        ('', 'All'),  # Include an option to show all orders
+        ('New', 'New'),
+        ('Accepted', 'Accepted'),
+        ('Completed', 'Completed'),
+        ('Cancelled', 'Cancelled'),
+        ('Delivered', 'Delivered'),
+        ('Returned', 'Returned'),
+    )
+    status = forms.ChoiceField(choices=STATUS_CHOICES, required=False)

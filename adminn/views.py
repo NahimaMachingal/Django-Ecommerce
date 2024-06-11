@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib import messages
 import csv
+from .forms import OrderFilterForm
 from django.contrib import messages,auth
 from django.db.models.functions import Coalesce
 from .utils import is_ajax
@@ -12,8 +13,8 @@ from xhtml2pdf import pisa
 from accounts.models import Account
 from django.forms import modelformset_factory
 from django.shortcuts import get_object_or_404
-from .forms import ProductForm, ProductImageForm, CouponForm
-from store.models import Product, ProductImage
+from .forms import ProductForm, ProductImageForm, CouponForm, VariationForm
+from store.models import Product, ProductImage,Variation
 from .forms import CategoryForm
 from orders.models import Order, Coupon, OrderProduct
 from django.db.models import Sum, Count, F
@@ -135,6 +136,23 @@ def editproduct(request, product_id):
     # Fetch existing images and pass them to the template
     existing_images = product.images.all()
     return render(request, "adminn/editproduct.html", {"form": form, "image_form": image_form, "existing_images": existing_images })
+
+@superuser_required
+def addvariation(request):
+    if request.method == 'POST':
+        form = VariationForm(request.POST)
+        if form.is_valid():
+            variation = form.save(commit=False)
+            variation.save()
+            return redirect('adminn:variationlist')  # Redirect to the variation list page
+    else:
+        form = VariationForm()
+    return render(request, 'adminn/addvariation.html', {'form': form})
+
+@superuser_required
+def variationlist(request):
+    variations = Variation.objects.all()
+    return render(request, 'adminn/variationlist.html', {'variations': variations})
 
 @superuser_required
 def categorylist(request):
