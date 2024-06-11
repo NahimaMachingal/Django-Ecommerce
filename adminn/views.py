@@ -204,6 +204,30 @@ def cancelorder(request, order_id):
     order.save()
     return redirect('adminn:orderlist')
 
+def process_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.is_ordered = False
+    order.status = 'processing'
+    order.save()
+    messages.success(request, 'Order status has been updated to Processing.')
+    return redirect('adminn:orderlist')  # Redirect to the order detail page or another appropriate page
+
+def ship_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.is_ordered = False
+    order.status = 'Shipped'
+    order.save()
+    messages.success(request, 'Order status has been updated to Shipped.')
+    return redirect('adminn:orderlist')  # Redirect to the order detail page or another appropriate page
+
+def deliver_order(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order.is_ordered = False
+    order.status = 'Delivered'
+    order.save()
+    messages.success(request, 'Order status has been updated to Delivered.')
+    return redirect('adminn:orderlist')  # Redirect to the order detail page or another appropriate page
+
 def order_detaill(request, order_id):
     order_detail = OrderProduct.objects.filter(order__order_number = order_id)
     order = Order.objects.get(order_number = order_id)

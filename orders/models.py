@@ -28,6 +28,7 @@ class Order(models.Model):
         ('New', 'New'),
         ('Accepted', 'Accepted'),
         ('Completed', 'Completed'),
+        ('Shipped', 'Shipped'),
         ('Cancelled', 'Cancelled' ),
         ('Delivered', 'Delivered'),
         ('Returned', 'Returned'),
