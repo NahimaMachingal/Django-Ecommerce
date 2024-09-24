@@ -2,6 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Google authentication
+    path("login/google",views.login_with_google,name="google_login"),
+    path("google/login/callback/",views.google_callback,name="google_callback"),
     path('register/', views.register, name='register'),
     path('loginn/', views.loginn, name='loginn'),
     path('logout/', views.logout, name='logout'),

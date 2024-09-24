@@ -30,6 +30,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from carts.models import Cart, CartItem
 from twilio.base.exceptions import TwilioRestException
 import requests
+from django.conf import settings
 
 
 
@@ -242,7 +243,6 @@ def user_wallet(request):
     return render(request, 'accounts/user_wallet.html', {'wallet': wallet, 'orders_wallet': orders_wallet})
 
 
-@login_required(login_url = 'loginn')
 def forgotpassword(request):
     if request.method == "POST":
         email = request.POST['email']
@@ -344,7 +344,12 @@ def add_address(request):
             address.user = request.user
             address.save()
             messages.success(request, 'Address added successfully')
-            return redirect('edit_profile')
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            else:
+                
+                return redirect('edit_profile')
     else:
         address_form = AddressForm()
 
@@ -612,3 +617,77 @@ def cancel_orderr(request, order_number):
     messages.success(request, "Order has been cancelled successfully.")
     return redirect('my_orders')  # Redirect to a success page after cancellation
     
+from django.urls import reverse
+import secrets
+import urllib.parse
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
+
+def login_with_google(request):
+    google_client_id = settings.GOOGLE_CLIENT_ID
+    redirect_uri = request.build_absolute_uri(reverse('google_callback'))
+    scope = "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
+    state = secrets.token_urlsafe(16)
+    request.session['oauth_token'] = state
+
+    params ={
+        'client_id': google_client_id,
+        'redirect_uri': redirect_uri,
+        'response_type': 'code',
+        'scope': scope,
+        'state': state,
+        'access_type': 'offline',
+        'prompt': 'select_account'
+    }
+    url = f'https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}'
+    return redirect(url)
+
+
+def google_callback(request):
+    if request.method == 'GET':
+        code = request.GET.get('code')
+        state = request.GET.get('state')
+        error = request.GET.get('error')
+        session_state = request.session.get('oauth_token')
+        request.session.pop('oauth_token',None)
+        if error or not state or state != session_state: 
+            messages.error(request, f"Not Authenticated")
+            return redirect('loginn')
+        token_url =  "https://oauth2.googleapis.com/token"
+        token_data = {
+            'code': code,
+            'client_id': settings.GOOGLE_CLIENT_ID,
+            'client_secret': settings.GOOGLE_CLIENT_SECRET,
+            'redirect_uri': request.build_absolute_uri(reverse('google_callback')),
+            'grant_type': 'authorization_code'
+        }
+        token_response = requests.post(token_url, data=token_data)
+        token_json = token_response.json()
+        access_token = token_json.get('access_token')
+
+
+        user_info_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+        user_info_params = {"access_token": access_token}
+        user_info_response = requests.get(user_info_url, params=user_info_params)
+        user_info = user_info_response.json()
+
+        email = user_info.get('email')
+        full_name  = user_info.get('name')
+        first_name = full_name.split(' ')[0]
+        last_name = full_name.split(' ')[-1]
+        username = email.split('@')[0]
+
+        user , created = User.objects.get_or_create(email=email,defaults={
+            'first_name': first_name,
+            'last_name': last_name,
+            'username': username,
+            'is_active': True,
+        })
+        if created:
+            user.set_unusable_password()
+            user.save()
+        auth.login(request, user)
+        messages.success(request, f"Login Successful with Google")
+        return redirect('user_home')

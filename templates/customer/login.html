@@ -18,8 +18,13 @@
         <label for="password">Password:</label><br>
         <input type="password" id="password" name="password"><br>
         <a href="">Forgot Password?</a><br>
-        <button type="submit"><a href = "{ % url 'user_view' %}Login</button>
+        <button type="submit"><a href = "{ % url 'user_view' %}">Login</a></button>
+        <a href="{% url 'google_login' %}">Login With Google</a>
     </form>
+
+    <hr>
+    <!-- Google Authentication Button -->
+   
 </body>
 </html>
 {% endblock content %}

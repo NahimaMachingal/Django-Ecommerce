@@ -40,7 +40,7 @@
             <p>No addresses found.</p>
             {% endif %}
           <div class="mt-3 ml-5" style="display: inline-block;">
-            <a href="{% url 'add_address' %}" class="btn btn-primary">Add Address</a>
+            <a href="{% url 'add_address' %}?next={% url 'checkout' %}" class="btn btn-primary">Add Address</a>
           </div>
           <br>
           <br>

@@ -245,7 +245,13 @@ def add_address(request):
             address.user = request.user
             address.save()
             messages.success(request, 'Address added successfully')
-            return redirect('edit_profile')
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            else:
+                
+                
+                return redirect('edit_profile')
     else:
         address_form = AddressForm()
 

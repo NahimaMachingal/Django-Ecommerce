@@ -83,7 +83,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'firstproject.wsgi.application'
 
 AUTH_USER_MODEL = 'accounts.Account'
-
+GOOGLE_CLIENT_ID = "895323184685-j18ac3pepa1prs8sm8m0np25e32sk7c3.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
