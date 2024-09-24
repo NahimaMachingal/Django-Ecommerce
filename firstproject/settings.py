@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -83,10 +85,8 @@ TEMPLATES = [
 WSGI_APPLICATION = 'firstproject.wsgi.application'
 
 AUTH_USER_MODEL = 'accounts.Account'
-
-GOOGLE_OAUTH_CLIENT_ID = os.getenv("GOOGLE_OAUTH_CLIENT_ID")
-GOOGLE_OAUTH_CLIENT_SECRET = os.getenv("GOOGLE_OAUTH_CLIENT_SECRET")
-
+GOOGLE_CLIENT_ID = str(os.getenv('GOOGLE_CLIENT_ID'))
+GOOGLE_CLIENT_SECRET = str(os.getenv('GOOGLE_CLIENT_SECRET'))
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
