@@ -1,4 +1,4 @@
-# 🛍️ Django Ecommerce
+# 🛍️ H & M Clothing Store
 
 A web-based shopping platform built with Django and Django Template Language.
 
