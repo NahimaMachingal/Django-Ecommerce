@@ -36,30 +36,22 @@ A web-based shopping platform built with Django and Django Template Language.
 
 ---
 
-## ⚙️ Installation
+# Installation Guide
 
-### 1. Clone the Repository
-
+## 2. Create a Virtual Environment
 ```bash
-git clone https://github.com/NahimaMachingal/Django-Ecommerce.git
-cd Django-Ecommerce
-2. Create a Virtual Environment
-bash
-Copy
-Edit
 python -m venv venv
 source venv/bin/activate        # On Windows: venv\Scripts\activate
-3. Install Dependencies
-bash
-Copy
-Edit
-pip install -r requirements.txt
-4. Configure the Database
-Update settings.py with your PostgreSQL credentials:
+```
 
-python
-Copy
-Edit
+## 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+## 4. Configure the Database
+Update `settings.py` with your PostgreSQL credentials:
+```python
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -70,50 +62,46 @@ DATABASES = {
         'PORT': '5432',
     }
 }
-5. Run Migrations
-bash
-Copy
-Edit
+```
+
+## 5. Run Migrations
+```bash
 python manage.py makemigrations
 python manage.py migrate
-6. Create a Superuser
-bash
-Copy
-Edit
+```
+
+## 6. Create a Superuser
+```bash
 python manage.py createsuperuser
+```
 Follow the prompts to set up an admin account.
 
-7. Run the Server
-bash
-Copy
-Edit
+## 7. Run the Server
+```bash
 python manage.py runserver
+```
 Visit: http://127.0.0.1:8000/
 
-🚀 How to Use
-Register or log in as a user.
+## 🚀 How to Use
+- Register or log in as a user.
+- Browse products and add items to the cart.
+- Proceed to checkout and place an order.
+- Admins can manage products and orders at `/admin/`.
 
-Browse products and add items to the cart.
-
-Proceed to checkout and place an order.
-
-Admins can manage products and orders at /admin/.
-
-🌐 Deployment
+## 🌐 Deployment
 To deploy in a production environment, use Gunicorn with NGINX as a reverse proxy.
 
-Example Gunicorn Command
-bash
-Copy
-Edit
+### Example Gunicorn Command
+```bash
 gunicorn --bind 0.0.0.0:8000 myproject.wsgi
-📄 License
+```
+
+## 📄 License
 This project is licensed under the MIT License.
 
-🤝 Contributing
+## 🤝 Contributing
 Pull requests are welcome!
 Feel free to fork the repository and submit your changes.
 
-📬 Contact
+## 📬 Contact
 For any queries or support, reach out via GitHub Issues.
-
