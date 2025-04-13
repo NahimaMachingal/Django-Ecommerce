@@ -1,101 +1,119 @@
-Django Ecommerce
+# 🛍️ Django Ecommerce
 
-Overview
+A web-based shopping platform built with Django and Django Template Language.
 
-Django Ecommerce is a web-based shopping platform built using Django Template Language. This project provides a fully functional e-commerce system with features like product management, user authentication, shopping cart, order processing, and payment integration.
+---
 
-Features
+## 📌 Overview
 
-User authentication (signup, login, logout)
+**Django Ecommerce** is a fully functional e-commerce system featuring product management, user authentication, cart operations, order tracking, and payment integration. It’s designed with scalability and customization in mind, making it an ideal base for any online store.
 
-Product listing and detailed product pages
+---
 
-Shopping cart functionality
+## ✨ Features
 
-Order placement and tracking
+- 🔐 User Authentication (Signup, Login, Logout)
+- 🛍️ Product Listing with Detailed Product Pages
+- 🛒 Shopping Cart Functionality
+- 📦 Order Placement and Tracking
+- 💳 Secure Checkout with Payment Gateway Integration
+- 🧾 PDF Invoice Generation
+- 🛠️ Admin Panel for Product and Order Management
+- 📱 SMS Notifications via Twilio
 
-Secure checkout with payment gateway integration
+---
 
-PDF invoice generation
+## 🛠️ Technologies Used
 
-Admin panel for product and order management
+| Component        | Technology                         |
+|------------------|-------------------------------------|
+| **Backend**      | Django, Django Template Language    |
+| **Database**     | PostgreSQL                          |
+| **Authentication** | Django Allauth, JWT              |
+| **Payment Gateway** | Integrated via External APIs    |
+| **PDF Invoices** | WeasyPrint                          |
+| **SMS**          | Twilio API                          |
 
-Technologies Used
+---
 
-Backend: Django, Django Template Language
+## ⚙️ Installation
 
-Database: PostgreSQL
+### 1. Clone the Repository
 
-Authentication: Django Allauth, JWT
-
-Payment Gateway: Integrated with external APIs
-
-Additional Features: PDF invoice generation using WeasyPrint, Twilio for SMS notifications
-
-Installation
-
-1. Clone the Repository
-
- git clone https://github.com/NahimaMachingal/Django-Ecommerce.git
- cd Django-Ecommerce
-
+```bash
+git clone https://github.com/NahimaMachingal/Django-Ecommerce.git
+cd Django-Ecommerce
 2. Create a Virtual Environment
-
- python -m venv venv
- source venv/bin/activate  # On Windows use: venv\Scripts\activate
-
+bash
+Copy
+Edit
+python -m venv venv
+source venv/bin/activate        # On Windows: venv\Scripts\activate
 3. Install Dependencies
-
- pip install -r requirements.txt
-
+bash
+Copy
+Edit
+pip install -r requirements.txt
 4. Configure the Database
+Update settings.py with your PostgreSQL credentials:
 
-Update the settings.py file with your PostgreSQL credentials.
-
-Run migrations:
-
- python manage.py makemigrations
- python manage.py migrate
-
-5. Create a Superuser
-
- python manage.py createsuperuser
-
+python
+Copy
+Edit
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'your_db_name',
+        'USER': 'your_db_user',
+        'PASSWORD': 'your_db_password',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    }
+}
+5. Run Migrations
+bash
+Copy
+Edit
+python manage.py makemigrations
+python manage.py migrate
+6. Create a Superuser
+bash
+Copy
+Edit
+python manage.py createsuperuser
 Follow the prompts to set up an admin account.
 
-6. Run the Server
+7. Run the Server
+bash
+Copy
+Edit
+python manage.py runserver
+Visit: http://127.0.0.1:8000/
 
- python manage.py runserver
+🚀 How to Use
+Register or log in as a user.
 
-Access the application at http://127.0.0.1:8000/
+Browse products and add items to the cart.
 
-How to Use
+Proceed to checkout and place an order.
 
-Register/Login as a user
+Admins can manage products and orders at /admin/.
 
-Browse products and add them to the cart
+🌐 Deployment
+To deploy in a production environment, use Gunicorn with NGINX as a reverse proxy.
 
-Proceed to checkout and place an order
-
-Admins can manage products and orders from /admin/
-
-Deployment
-
-To deploy the project, you can use Gunicorn for a production WSGI server along with NGINX as a reverse proxy.
-
-Example for Gunicorn:
-
- gunicorn --bind 0.0.0.0:8000 myproject.wsgi
-
-License
-
+Example Gunicorn Command
+bash
+Copy
+Edit
+gunicorn --bind 0.0.0.0:8000 myproject.wsgi
+📄 License
 This project is licensed under the MIT License.
 
-Contributing
+🤝 Contributing
+Pull requests are welcome!
+Feel free to fork the repository and submit your changes.
 
-Pull requests are welcome! Feel free to fork the repository and submit changes.
-
-Contact
-
-For any queries, reach out via GitHub.
+📬 Contact
+For any queries or support, reach out via GitHub Issues.
 
